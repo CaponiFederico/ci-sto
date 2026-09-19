@@ -1,0 +1,17 @@
+{
+  "name": "bacheca",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Bacheca universitaria — attività fra studenti (progetto SAW 2026)",
+  "workspaces": [
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev:web": "npm run dev --workspace web",
+    "build": "npm run build --workspace web",
+    "preview": "npm run preview --workspace web"
+  }
+}
