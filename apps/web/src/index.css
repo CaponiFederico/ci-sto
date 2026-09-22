@@ -61,6 +61,12 @@ h1 {
   color: var(--testo-tenue);
 }
 
+.sessione {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  color: var(--testo-tenue);
+}
+
 .vuoto {
   color: var(--testo-tenue);
   background: var(--superficie);
