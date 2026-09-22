@@ -62,9 +62,37 @@ h1 {
 }
 
 .sessione {
-  margin: 0.5rem 0 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
   font-size: 0.875rem;
   color: var(--testo-tenue);
+}
+
+button {
+  font: inherit;
+  padding: 0.4rem 0.9rem;
+  color: var(--superficie);
+  background: var(--accento);
+  border: 1px solid var(--accento);
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.errore {
+  margin: 0.75rem 0 0;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--testo);
+  background: var(--superficie);
+  border-left: 3px solid var(--accento);
+  border-radius: 0.25rem;
 }
 
 .vuoto {
