@@ -6,6 +6,14 @@ build/
 .env
 .env.local
 .env.*.local
+*-service-account.json
+serviceAccountKey.json
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
 
 # editor
 .vscode/
