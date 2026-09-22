@@ -1,4 +1,9 @@
-import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import {
+  GoogleAuthProvider,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+} from 'firebase/auth';
 import { chiamaApi } from './api';
 import { auth } from './firebase';
 
@@ -15,6 +20,10 @@ export interface Sessione {
 
 export function accediConGoogle() {
   return signInWithPopup(auth, google);
+}
+
+export function accediConPassword(email: string, password: string) {
+  return signInWithEmailAndPassword(auth, email, password);
 }
 
 export async function apriSessione() {

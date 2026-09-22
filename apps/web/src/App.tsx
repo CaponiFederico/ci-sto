@@ -1,7 +1,7 @@
 import { onAuthStateChanged, type User } from 'firebase/auth';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { ErroreApi } from './api';
-import { accediConGoogle, apriSessione, esci } from './auth';
+import { accediConGoogle, accediConPassword, apriSessione, esci } from './auth';
 import { auth } from './firebase';
 
 function messaggio(errore: unknown) {
@@ -24,6 +24,14 @@ function messaggio(errore: unknown) {
   }
   if (codice === 'auth/popup-blocked') {
     return 'Il browser ha bloccato la finestra di accesso.';
+  }
+
+  // Firebase non distingue password errata da utente inesistente: non rivela quali indirizzi esistono.
+  if (codice === 'auth/invalid-credential' || codice === 'auth/invalid-email') {
+    return 'Email o password non corretti.';
+  }
+  if (codice === 'auth/too-many-requests') {
+    return 'Troppi tentativi. Riprova fra qualche minuto.';
   }
   return 'Accesso non riuscito. Riprova.';
 }
@@ -57,16 +65,24 @@ function App() {
     [],
   );
 
-  async function accedi() {
+  async function accedi(operazione: () => Promise<unknown>) {
     setErrore(null);
     setAccessoInCorso(true);
     try {
-      await accediConGoogle();
+      await operazione();
     } catch (e) {
       setErrore(messaggio(e));
     } finally {
       setAccessoInCorso(false);
     }
+  }
+
+  function inviaCredenziali(evento: FormEvent<HTMLFormElement>) {
+    evento.preventDefault();
+    const dati = new FormData(evento.currentTarget);
+    void accedi(() =>
+      accediConPassword(String(dati.get('email')), String(dati.get('password'))),
+    );
   }
 
   return (
@@ -86,11 +102,40 @@ function App() {
               </button>
             </>
           ) : (
-            <button type="button" onClick={() => void accedi()} disabled={accessoInCorso}>
+            <button
+              type="button"
+              onClick={() => void accedi(accediConGoogle)}
+              disabled={accessoInCorso}
+            >
               {accessoInCorso ? 'Accesso in corso…' : 'Accedi con Google'}
             </button>
           )}
         </div>
+
+        {sessioneVerificata && !utente && (
+          <details className="credenziali">
+            <summary>Accedi con email e password</summary>
+
+            <form onSubmit={inviaCredenziali}>
+              <label>
+                Email
+                <input type="email" name="email" required autoComplete="username" />
+              </label>
+              <label>
+                Password
+                <input
+                  type="password"
+                  name="password"
+                  required
+                  autoComplete="current-password"
+                />
+              </label>
+              <button type="submit" disabled={accessoInCorso}>
+                Accedi
+              </button>
+            </form>
+          </details>
+        )}
 
         {errore && (
           <p className="errore" role="alert">
