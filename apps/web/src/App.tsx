@@ -1,7 +1,32 @@
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { useEffect, useState } from 'react';
-import { accediConGoogle, esci } from './auth';
+import { ErroreApi } from './api';
+import { accediConGoogle, apriSessione, esci } from './auth';
 import { auth } from './firebase';
+
+function messaggio(errore: unknown) {
+  if (errore instanceof ErroreApi) {
+    if (errore.codice === 'dominio_non_ammesso') {
+      return 'Questo indirizzo non appartiene all’ateneo. Accedi con l’account universitario.';
+    }
+    if (errore.codice === 'api_irraggiungibile') {
+      return 'Il servizio non risponde. Verifica che l’API sia avviata.';
+    }
+    if (errore.codice === 'email_non_verificata') {
+      return 'L’indirizzo non risulta verificato.';
+    }
+    return 'Non è stato possibile aprire la sessione. Riprova.';
+  }
+
+  const codice = (errore as { code?: string }).code;
+  if (codice === 'auth/popup-closed-by-user' || codice === 'auth/cancelled-popup-request') {
+    return 'Accesso annullato.';
+  }
+  if (codice === 'auth/popup-blocked') {
+    return 'Il browser ha bloccato la finestra di accesso.';
+  }
+  return 'Accesso non riuscito. Riprova.';
+}
 
 function App() {
   const [utente, setUtente] = useState<User | null>(null);
@@ -9,11 +34,25 @@ function App() {
   const [accessoInCorso, setAccessoInCorso] = useState(false);
   const [errore, setErrore] = useState<string | null>(null);
 
+  // Vale sia per l'accesso appena fatto sia per la sessione ripresa al ricaricamento.
   useEffect(
     () =>
-      onAuthStateChanged(auth, (u) => {
-        setUtente(u);
-        setSessioneVerificata(true);
+      onAuthStateChanged(auth, async (u) => {
+        if (!u) {
+          setUtente(null);
+          setSessioneVerificata(true);
+          return;
+        }
+
+        try {
+          await apriSessione();
+          setUtente(u);
+        } catch (e) {
+          setErrore(messaggio(e));
+          await esci();
+        } finally {
+          setSessioneVerificata(true);
+        }
       }),
     [],
   );
@@ -24,14 +63,7 @@ function App() {
     try {
       await accediConGoogle();
     } catch (e) {
-      const codice = (e as { code?: string }).code;
-      setErrore(
-        codice === 'auth/popup-closed-by-user' || codice === 'auth/cancelled-popup-request'
-          ? 'Accesso annullato.'
-          : codice === 'auth/popup-blocked'
-            ? 'Il browser ha bloccato la finestra di accesso.'
-            : 'Accesso non riuscito. Riprova.',
-      );
+      setErrore(messaggio(e));
     } finally {
       setAccessoInCorso(false);
     }
