@@ -1,6 +1,13 @@
+import './ambiente.js';
+
 import cors from 'cors';
-import 'dotenv/config';
 import express from 'express';
+import {
+  appartieneAllAteneo,
+  richiediAutenticazione,
+  type RichiestaAutenticata,
+} from './auth.js';
+import { auth } from './firebase.js';
 
 const app = express();
 
@@ -17,6 +24,28 @@ app.use(cors({ origin: origins }));
 
 app.get('/health', (_req, res) => {
   res.json({ ok: true, at: new Date().toISOString() });
+});
+
+// la lista dei domini resta solo qui.
+app.post('/v1/session', richiediAutenticazione, async (req, res) => {
+  const { uid, email, email_verified, ateneo } = (req as RichiestaAutenticata).token;
+
+  if (!email_verified) {
+    res.status(403).json({ error: 'email_non_verificata' });
+    return;
+  }
+
+  if (!appartieneAllAteneo(email)) {
+    res.status(403).json({ error: 'dominio_non_ammesso', email });
+    return;
+  }
+
+  const daConcedere = ateneo !== true;
+  if (daConcedere) {
+    await auth.setCustomUserClaims(uid, { ateneo: true });
+  }
+
+  res.json({ ateneo: true, email, aggiornaToken: daConcedere });
 });
 
 // Gestore d'errore: con meno di quattro parametri Express non lo invoca mai.
