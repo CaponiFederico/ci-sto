@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc -b",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "utente-test": "tsx src/scripts/crea-utente-test.ts"
   },
   "dependencies": {
     "cors": "^2.8.6",
