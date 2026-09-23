@@ -22,7 +22,7 @@ Nucleo:
 ## Requisiti
 
 - **Node.js ≥ 20** (sviluppato su 24.21.0 LTS)
-- **Firebase CLI** per emulatori e deploy, invocabile con `npx firebase-tools`
+- **Java** per l'emulatore Firestore (la Firebase CLI arriva con `npm install`)
 
 ## Avvio
 
@@ -57,15 +57,23 @@ npm run build
 npm run preview
 ```
 
-## Deploy
+## Emulatori
 
-Il progetto Firebase è indicato in `.firebaserc`.
-Serve autenticarsi:
+Autenticazione e Firestore in locale, senza toccare i dati veri. Richiede Java.
 
 ```bash
-npx firebase-tools login
-npm run build
-npx firebase-tools deploy --only hosting
+npm run emulatori
+```
+
+Interfaccia su `http://127.0.0.1:4000`, Authentication su 9099, Firestore su 8080.
+
+## Deploy
+
+Il progetto Firebase è indicato in `.firebaserc`. La prima volta serve autenticarsi:
+
+```bash
+npx firebase login
+npm run deploy
 ```
 
 ---

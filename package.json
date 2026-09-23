@@ -16,6 +16,11 @@
     "build:web": "npm run build --workspace web",
     "build:api": "npm run build --workspace api",
     "utente:test": "npm run utente-test --workspace api",
-    "preview": "npm run preview --workspace web"
+    "preview": "npm run preview --workspace web",
+    "emulatori": "firebase emulators:start",
+    "deploy": "npm run build:web && firebase deploy --only hosting"
+  },
+  "devDependencies": {
+    "firebase-tools": "^15.30.2"
   }
 }
