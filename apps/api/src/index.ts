@@ -8,6 +8,8 @@ import {
   type RichiestaAutenticata,
 } from './auth.js';
 import { auth } from './firebase.js';
+import { db } from './firestore.js';
+import { COLLEZIONI, type Utente } from 'modello';
 
 const app = express();
 
@@ -28,7 +30,7 @@ app.get('/health', (_req, res) => {
 
 // la lista dei domini resta solo qui.
 app.post('/v1/session', richiediAutenticazione, async (req, res) => {
-  const { uid, email, email_verified, ateneo } = (req as RichiestaAutenticata).token;
+  const { uid, email, email_verified, name, ateneo } = (req as RichiestaAutenticata).token;
 
   if (!email_verified) {
     res.status(403).json({ error: 'email_non_verificata' });
@@ -44,6 +46,16 @@ app.post('/v1/session', richiediAutenticazione, async (req, res) => {
   if (daConcedere) {
     await auth.setCustomUserClaims(uid, { ateneo: true });
   }
+
+  const adesso = Date.now();
+  const profilo: Partial<Utente> = { email: email!, ultimoAccesso: adesso };
+  if (name) profilo.nome = name as string;
+
+  // merge: il primo accesso crea il documento, i successivi aggiornano senza sovrascrivere.
+  await db
+    .collection(COLLEZIONI.utenti)
+    .doc(uid)
+    .set({ creatoIl: adesso, ...profilo }, { merge: true });
 
   res.json({ ateneo: true, email, aggiornaToken: daConcedere });
 });

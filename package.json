@@ -4,15 +4,17 @@
   "version": "0.0.0",
   "description": "Bacheca universitaria \u2014 attivit\u00e0 fra studenti (progetto SAW 2026)",
   "workspaces": [
-    "apps/*"
+    "apps/*",
+    "packages/*"
   ],
   "engines": {
     "node": ">=20"
   },
   "scripts": {
-    "dev:web": "npm run dev --workspace web",
-    "dev:api": "npm run dev --workspace api",
-    "build": "npm run build --workspace web && npm run build --workspace api",
+    "build:modello": "npm run build --workspace modello",
+    "dev:web": "npm run build:modello && npm run dev --workspace web",
+    "dev:api": "npm run build:modello && npm run dev --workspace api",
+    "build": "npm run build:modello && npm run build --workspace web && npm run build --workspace api",
     "build:web": "npm run build --workspace web",
     "build:api": "npm run build --workspace api",
     "utente:test": "npm run utente-test --workspace api",
