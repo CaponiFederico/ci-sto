@@ -67,6 +67,16 @@ npm run emulatori
 
 Interfaccia su `http://127.0.0.1:4000`, Authentication su 9099, Firestore su 8080.
 
+## Test
+
+Le Security Rules sono verificate sull'emulatore
+
+```bash
+npm test
+```
+
+Il comando avvia l'emulatore Firestore, esegue i test e lo spegne.
+
 ## Deploy
 
 Il progetto Firebase è indicato in `.firebaserc`. La prima volta serve autenticarsi:
@@ -74,6 +84,12 @@ Il progetto Firebase è indicato in `.firebaserc`. La prima volta serve autentic
 ```bash
 npx firebase login
 npm run deploy
+```
+
+Dopo che i test passano:
+
+```bash
+npm run deploy:regole
 ```
 
 ---
