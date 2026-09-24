@@ -51,11 +51,12 @@ app.post('/v1/session', richiediAutenticazione, async (req, res) => {
   const profilo: Partial<Utente> = { email: email!, ultimoAccesso: adesso };
   if (name) profilo.nome = name as string;
 
-  // merge: il primo accesso crea il documento, i successivi aggiornano senza sovrascrivere.
-  await db
-    .collection(COLLEZIONI.utenti)
-    .doc(uid)
-    .set({ creatoIl: adesso, ...profilo }, { merge: true });
+  const riferimento = db.collection(COLLEZIONI.utenti).doc(uid);
+
+  // creatoIl va scritto solo al primo accesso 
+  if (!(await riferimento.get()).exists) profilo.creatoIl = adesso;
+
+  await riferimento.set(profilo, { merge: true });
 
   res.json({ ateneo: true, email, aggiornaToken: daConcedere });
 });
