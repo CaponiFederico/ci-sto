@@ -53,8 +53,8 @@ app.post('/v1/session', richiediAutenticazione, async (req, res) => {
 
   const riferimento = db.collection(COLLEZIONI.utenti).doc(uid);
 
-  // creatoIl va scritto solo al primo accesso 
-  if (!(await riferimento.get()).exists) profilo.creatoIl = adesso;
+  // Con merge un campo presente verrebbe riscritto a ogni accesso.
+  if (!(await riferimento.get()).exists) profilo.primoAccesso = adesso;
 
   await riferimento.set(profilo, { merge: true });
 

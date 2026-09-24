@@ -19,7 +19,7 @@ export type Categoria = 'sport' | 'studio' | 'trasporto' | 'svago' | 'altro';
 
 export type StatoAttivita = 'aperta' | 'completa' | 'annullata';
 
-export type StatoPartecipante = 'confermato' | 'in_attesa' | 'da_confermare' | 'uscito';
+export type StatoPartecipante = 'confermato' | 'in_attesa' | 'da_confermare';
 
 export type PoliticaCoda = 'fifo' | 'affinita' | 'esplorazione' | 'rotazione' | 'equita';
 
@@ -41,7 +41,7 @@ export interface Luogo {
 export interface Utente {
   email: string;
   nome: string;
-  creatoIl: number;
+  primoAccesso: number;
   ultimoAccesso: number;
 }
 
@@ -66,7 +66,6 @@ export interface Partecipante {
   stato: StatoPartecipante;
   iscrittoIl: number;
   punteggio: number;
-  posizione: number | null;
   versioneAccettata: number;
   confermaEntro: number | null;
 }

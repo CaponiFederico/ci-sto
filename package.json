@@ -20,7 +20,7 @@
     "utente:test": "npm run utente-test --workspace api",
     "preview": "npm run preview --workspace web",
     "test:regole": "firebase emulators:exec --only firestore \"node --test test/regole.test.mjs\"",
-    "test": "npm run test:regole",
+    "test": "npm run build:modello && npm run build:api && firebase emulators:exec --only firestore \"node --test test/*.test.mjs\"",
     "emulatori": "firebase emulators:start",
     "deploy": "npm run build:web && firebase deploy --only hosting",
     "deploy:regole": "firebase deploy --only firestore:rules"
