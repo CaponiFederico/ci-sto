@@ -2,8 +2,52 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if false;
+
+    function ateneo() {
+      return request.auth != null && request.auth.token.ateneo == true;
+    }
+
+    function proprietario(uid) {
+      return ateneo() && request.auth.uid == uid;
+    }
+
+    match /utenti/{uid} {
+      allow read: if ateneo();
+      allow write: if false;
+    }
+
+    match /attivita/{attivita} {
+      allow read: if ateneo();
+      allow write: if false;
+
+      match /partecipanti/{uid} {
+        allow read: if ateneo();
+        allow write: if false;
+      }
+
+      match /eventi/{evento} {
+        allow read: if ateneo();
+        allow write: if false;
+      }
+    }
+
+    match /statistiche/{uid} {
+      allow read: if proprietario(uid);
+      allow write: if false;
+
+      match /coPartecipanti/{altro} {
+        allow read: if proprietario(uid);
+        allow write: if false;
+      }
+    }
+
+    match /sottoscrizioni/{uid}/dispositivi/{dispositivo} {
+      allow read, delete: if proprietario(uid);
+      allow create, update: if proprietario(uid)
+        && request.resource.data.keys().hasOnly(['endpoint', 'chiavi', 'creataIl'])
+        && request.resource.data.endpoint is string
+        && request.resource.data.creataIl is int
+        && request.resource.data.chiavi.keys().hasOnly(['p256dh', 'auth']);
     }
   }
 }

@@ -9,6 +9,7 @@ export const SOTTOCOLLEZIONI = {
   partecipanti: 'partecipanti',
   eventi: 'eventi',
   coPartecipanti: 'coPartecipanti',
+  dispositivi: 'dispositivi',
 } as const;
 
 export const CAPACITA_MINIMA = 2;
