@@ -106,9 +106,11 @@ export async function creaAttivita(organizzatore: string, nuova: NuovaAttivita, 
     ...nuova,
     postiOccupati: 1,
     inAttesa: 0,
+    daConfermare: 0,
     organizzatore,
     stato: 'aperta',
     versione: 1,
+    versioneSostanziale: 1,
     creataIl: adesso,
     modificataIl: adesso,
   };
@@ -119,6 +121,8 @@ export async function creaAttivita(organizzatore: string, nuova: NuovaAttivita, 
     punteggio: 0,
     versioneAccettata: 1,
     confermaEntro: null,
+    confermatoIl: adesso,
+    retrocessoIl: null,
   };
   const creata: Evento = { tipo: 'creata', utente: organizzatore, quando: adesso, versione: 1 };
   const iscritto: Evento = { ...creata, tipo: 'iscritto' };

@@ -11,12 +11,14 @@ const attivita = (id) => db.collection('attivita').doc(id);
 
 
 async function verificaInvarianti(id) {
-  const { capacita, postiOccupati, inAttesa } = (await attivita(id).get()).data();
+  const { capacita, postiOccupati, inAttesa, daConfermare } = (await attivita(id).get()).data();
   const partecipanti = attivita(id).collection('partecipanti');
-  const confermati = await partecipanti.where('stato', '==', 'confermato').get();
-  const inCoda = await partecipanti.where('stato', '==', 'in_attesa').get();
-  assert.equal(postiOccupati, confermati.size);
-  assert.equal(inAttesa, inCoda.size);
+  const conta = async (stato) => (await partecipanti.where('stato', '==', stato).get()).size;
+  const daRiconfermare = await conta('da_confermare');
+  // Chi deve riconfermare tiene il posto fino alla scadenza.
+  assert.equal(postiOccupati, (await conta('confermato')) + daRiconfermare);
+  assert.equal(daConfermare, daRiconfermare);
+  assert.equal(inAttesa, await conta('in_attesa'));
   assert.ok(postiOccupati <= capacita);
 }
 
@@ -209,6 +211,46 @@ describe('uscita', () => {
     id = await attivitaDiProva();
     await iscrivi(id, 'michele', () => ADESSO);
     assert.deepEqual(await esci(id, 'michele', () => DOMANI), { esito: 'rifiutato', motivo: 'iniziata' });
+  });
+});
+
+// Lo stato da_confermare lo produrrà la modifica sostanziale
+async function daRiconfermare(id, uid, entro) {
+  const batch = db.batch();
+  batch.update(attivita(id).collection('partecipanti').doc(uid), { stato: 'da_confermare', confermaEntro: entro });
+  batch.update(attivita(id), { daConfermare: 1 });
+  await batch.commit();
+}
+
+describe('campi di M4', () => {
+  it('confermatoIl segna la conferma, anche per promozione', async () => {
+    id = await attivitaDiProva({ capacita: 2 });
+    const [primo, secondo] = studenti(2);
+    await iscriviInSequenza(id, [primo, secondo]);
+    assert.equal((await partecipante(id, primo)).confermatoIl, ADESSO);
+    assert.equal((await partecipante(id, secondo)).confermatoIl, null);
+
+    await esci(id, primo, () => ADESSO + 10);
+    const promosso = await partecipante(id, secondo);
+    assert.equal(promosso.stato, 'confermato');
+    assert.equal(promosso.confermatoIl, ADESSO + 10);
+  });
+
+  it('chi deve riconfermare riceve da_confermare con la scadenza', async () => {
+    id = await attivitaDiProva();
+    await iscrivi(id, 'michele', () => ADESSO);
+    await daRiconfermare(id, 'michele', DOMANI);
+    assert.deepEqual(await iscrivi(id, 'michele', () => ADESSO + 1), { esito: 'da_confermare', entro: DOMANI });
+  });
+
+  it('se esce chi deve riconfermare, il suo posto va al primo in coda', async () => {
+    id = await attivitaDiProva({ capacita: 2 });
+    const [primo, secondo] = studenti(2);
+    await iscriviInSequenza(id, [primo, secondo]);
+    await daRiconfermare(id, primo, DOMANI);
+
+    assert.deepEqual(await esci(id, primo, () => ADESSO + 10), { esito: 'uscito', promosso: secondo });
+    assert.equal((await attivita(id).get()).data().daConfermare, 0);
   });
 });
 

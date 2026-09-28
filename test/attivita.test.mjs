@@ -66,6 +66,8 @@ describe('creazione', () => {
     assert.equal(attivita.organizzatore, 'manuela');
     assert.equal(attivita.postiOccupati, 1);
     assert.equal(attivita.inAttesa, 0);
+    assert.equal(attivita.daConfermare, 0);
+    assert.equal(attivita.versioneSostanziale, 1);
     assert.equal(attivita.stato, 'aperta');
     assert.equal(attivita.versione, 1);
     assert.equal(attivita.creataIl, ADESSO);

@@ -60,8 +60,9 @@ export async function iscrivi(
     // Richiesta ripetuta, o dell'organizzatore: stesso esito, nessuna scrittura.
     const partecipanteDoc = await tx.get(partecipanteRif);
     if (partecipanteDoc.exists) {
-      const { stato, iscrittoIl } = partecipanteDoc.data() as Partecipante;
-      if (stato !== 'in_attesa') return { esito: 'confermato' };
+      const { stato, iscrittoIl, confermaEntro } = partecipanteDoc.data() as Partecipante;
+      if (stato === 'da_confermare') return { esito: 'da_confermare', entro: confermaEntro! };
+      if (stato === 'confermato') return { esito: 'confermato' };
       return { esito: 'in_attesa', posizione: await posizioneInCoda(tx, partecipanti, uid, iscrittoIl) };
     }
 
@@ -74,6 +75,8 @@ export async function iscrivi(
       punteggio: 0,
       versioneAccettata: attivita.versione,
       confermaEntro: null,
+      confermatoIl: confermato ? adesso : null,
+      retrocessoIl: null,
     };
     const evento: Evento = {
       tipo: 'iscritto',
@@ -143,6 +146,10 @@ export async function esci(
           ).docs[0]
         : undefined;
 
+    // Chi doveva riconfermare teneva il posto
+    const contatori: Partial<Attivita> =
+      stato === 'da_confermare' ? { daConfermare: attivita.daConfermare - 1 } : {};
+
     const versione = attivita.versione;
     tx.delete(partecipanteRif);
     tx.set(eventi.doc(), { tipo: 'uscito', utente: uid, quando: adesso, versione } satisfies Evento);
@@ -154,13 +161,18 @@ export async function esci(
 
     // Il posto passa al primo in coda
     if (primo) {
-      tx.update(primo.ref, { stato: 'confermato' } satisfies Partial<Partecipante>);
+      tx.update(primo.ref, {
+        stato: 'confermato',
+        confermatoIl: adesso,
+        retrocessoIl: null,
+      } satisfies Partial<Partecipante>);
       tx.set(eventi.doc(), { tipo: 'promosso', utente: primo.id, quando: adesso, versione } satisfies Evento);
-      tx.update(attivitaRif, { inAttesa: attivita.inAttesa - 1 } satisfies Partial<Attivita>);
+      tx.update(attivitaRif, { ...contatori, inAttesa: attivita.inAttesa - 1 } satisfies Partial<Attivita>);
       return { esito: 'uscito', promosso: primo.id };
     }
 
     tx.update(attivitaRif, {
+      ...contatori,
       postiOccupati: attivita.postiOccupati - 1,
       stato: 'aperta',
     } satisfies Partial<Attivita>);

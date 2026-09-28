@@ -57,10 +57,12 @@ export interface Attivita {
   capacita: number;
   postiOccupati: number;
   inAttesa: number;
+  daConfermare: number;
   organizzatore: string;
   politicaCoda: PoliticaCoda;
   stato: StatoAttivita;
   versione: number;
+  versioneSostanziale: number;
   creataIl: number;
   modificataIl: number;
 }
@@ -82,6 +84,8 @@ export interface Partecipante {
   punteggio: number;
   versioneAccettata: number;
   confermaEntro: number | null;
+  confermatoIl: number | null;
+  retrocessoIl: number | null;
 }
 
 export type MotivoRifiuto = 'inesistente' | 'annullata' | 'iniziata';
@@ -89,6 +93,7 @@ export type MotivoRifiuto = 'inesistente' | 'annullata' | 'iniziata';
 export type EsitoIscrizione =
   | { esito: 'confermato' }
   | { esito: 'in_attesa'; posizione: number }
+  | { esito: 'da_confermare'; entro: number }
   | { esito: 'rifiutato'; motivo: MotivoRifiuto };
 
 export type MotivoRifiutoUscita = 'annullata' | 'iniziata' | 'organizzatore';
