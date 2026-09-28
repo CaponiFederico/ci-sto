@@ -24,7 +24,8 @@
     "test:concorrenza": "npm run build:modello && npm run build:api && firebase emulators:exec --only firestore \"node --test --test-name-pattern=concorrenza test/iscrizioni.test.mjs\"",
     "emulatori": "firebase emulators:start",
     "deploy": "npm run build:web && firebase deploy --only hosting",
-    "deploy:regole": "firebase deploy --only firestore:rules"
+    "deploy:regole": "firebase deploy --only firestore:rules",
+    "deploy:indici": "firebase deploy --only firestore:indexes"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.2",

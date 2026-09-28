@@ -3,7 +3,7 @@ import { svuotaFirestore } from './emulatore.mjs';
 import assert from 'node:assert/strict';
 import { after, afterEach, beforeEach, describe, it } from 'node:test';
 
-import { iscrivi } from '../apps/api/dist/iscrizioni.js';
+import { esci, iscrivi } from '../apps/api/dist/iscrizioni.js';
 import { db } from '../apps/api/dist/firestore.js';
 import { ADESSO, DOMANI, attivitaDiProva, studenti } from './dati.mjs';
 
@@ -112,6 +112,87 @@ describe('rifiuto', () => {
   });
 });
 
+const partecipante = async (id, uid) => (await attivita(id).collection('partecipanti').doc(uid).get()).data();
+const eventiDi = async (id, tipo) =>
+  (await attivita(id).collection('eventi').where('tipo', '==', tipo).get()).docs.map((d) => d.get('utente'));
+
+describe('uscita', () => {
+  it('da confermato, con la coda vuota, libera il posto e riapre l attività', async () => {
+    id = await attivitaDiProva({ capacita: 2 });
+    await iscrivi(id, 'michele', () => ADESSO);
+    assert.deepEqual(await esci(id, 'michele', () => ADESSO + 1), { esito: 'uscito', promosso: null });
+
+    const { postiOccupati, stato } = (await attivita(id).get()).data();
+    assert.equal(postiOccupati, 1);
+    assert.equal(stato, 'aperta');
+    assert.equal(await partecipante(id, 'michele'), undefined);
+    assert.deepEqual(await eventiDi(id, 'uscito'), ['michele']);
+  });
+
+  it('da confermato promuove il primo arrivato in coda, senza cambiare il contatore', async () => {
+    id = await attivitaDiProva({ capacita: 2 });
+    const [primo, secondo, terzo] = studenti(3);
+    await iscriviInSequenza(id, [primo, secondo, terzo]);
+
+    assert.deepEqual(await esci(id, primo, () => ADESSO + 10), { esito: 'uscito', promosso: secondo });
+
+    const { postiOccupati, inAttesa, stato } = (await attivita(id).get()).data();
+    assert.equal(postiOccupati, 2);
+    assert.equal(inAttesa, 1);
+    assert.equal(stato, 'completa');
+    assert.equal((await partecipante(id, secondo)).stato, 'confermato');
+    assert.deepEqual(await iscrivi(id, terzo, () => ADESSO + 11), { esito: 'in_attesa', posizione: 1 });
+    assert.deepEqual(await eventiDi(id, 'promosso'), [secondo]);
+  });
+
+  it('dalla coda non promuove nessuno e fa avanzare chi sta dietro', async () => {
+    id = await attivitaDiProva({ capacita: 2 });
+    const [primo, secondo, terzo] = studenti(3);
+    await iscriviInSequenza(id, [primo, secondo, terzo]);
+
+    assert.deepEqual(await esci(id, secondo, () => ADESSO + 10), { esito: 'uscito', promosso: null });
+
+    const { postiOccupati, inAttesa } = (await attivita(id).get()).data();
+    assert.equal(postiOccupati, 2);
+    assert.equal(inAttesa, 1);
+    assert.deepEqual(await iscrivi(id, terzo, () => ADESSO + 11), { esito: 'in_attesa', posizione: 1 });
+  });
+
+  it('chi rientra dopo essere uscito va in fondo alla coda', async () => {
+    id = await attivitaDiProva({ capacita: 2 });
+    const [primo, secondo, terzo] = studenti(3);
+    await iscriviInSequenza(id, [primo, secondo, terzo]);
+
+    await esci(id, secondo, () => ADESSO + 10);
+    assert.deepEqual(await iscrivi(id, secondo, () => ADESSO + 11), { esito: 'in_attesa', posizione: 2 });
+  });
+
+  it('di chi non è iscritto, o è già uscito, non cambia niente', async () => {
+    id = await attivitaDiProva();
+    await iscrivi(id, 'michele', () => ADESSO);
+    await esci(id, 'michele', () => ADESSO + 1);
+
+    assert.deepEqual(await esci(id, 'michele', () => ADESSO + 2), { esito: 'non_iscritto' });
+    assert.deepEqual(await esci(id, 'nessuno', () => ADESSO + 3), { esito: 'non_iscritto' });
+    assert.deepEqual(await esci('inesistente', 'michele', () => ADESSO), { esito: 'non_iscritto' });
+    assert.deepEqual(await eventiDi(id, 'uscito'), ['michele']);
+  });
+
+  it("è rifiutata all'organizzatore", async () => {
+    id = await attivitaDiProva({}, 'manuela');
+    assert.deepEqual(await esci(id, 'manuela', () => ADESSO), {
+      esito: 'rifiutato',
+      motivo: 'organizzatore',
+    });
+  });
+
+  it("è rifiutata se l'attività è già iniziata", async () => {
+    id = await attivitaDiProva();
+    await iscrivi(id, 'michele', () => ADESSO);
+    assert.deepEqual(await esci(id, 'michele', () => DOMANI), { esito: 'rifiutato', motivo: 'iniziata' });
+  });
+});
+
 // npm imposta il nome dello script: 20 giri solo con npm run test:concorrenza.
 const GIRI = process.env.npm_lifecycle_event === 'test:concorrenza' ? 20 : 3;
 
@@ -138,6 +219,23 @@ describe('concorrenza', () => {
       const { postiOccupati, stato } = (await attivita(id).get()).data();
       assert.equal(postiOccupati, 9, `giro ${giro}`);
       assert.equal(stato, 'completa', `giro ${giro}`);
+      await verificaInvarianti(id);
+    }
+  });
+
+  it(`uscita e iscrizione simultanee sull'ultimo posto, ${GIRI} giri: il posto resta occupato`, async () => {
+    for (let giro = 1; giro <= GIRI; giro++) {
+      id = await attivitaDiProva({ capacita: 2 });
+      await iscrivi(id, 'michele', orologio);
+
+      // In qualunque ordine vadano, lo stato finale è uno solo.
+      await Promise.all([esci(id, 'michele', orologio), iscrivi(id, 'nicola', orologio)]);
+
+      const { postiOccupati, inAttesa, stato } = (await attivita(id).get()).data();
+      assert.equal(postiOccupati, 2, `giro ${giro}`);
+      assert.equal(inAttesa, 0, `giro ${giro}`);
+      assert.equal(stato, 'completa', `giro ${giro}`);
+      assert.equal((await partecipante(id, 'nicola')).stato, 'confermato', `giro ${giro}`);
       await verificaInvarianti(id);
     }
   });

@@ -91,6 +91,13 @@ export type EsitoIscrizione =
   | { esito: 'in_attesa'; posizione: number }
   | { esito: 'rifiutato'; motivo: MotivoRifiuto };
 
+export type MotivoRifiutoUscita = 'annullata' | 'iniziata' | 'organizzatore';
+
+export type EsitoUscita =
+  | { esito: 'uscito'; promosso: string | null }
+  | { esito: 'non_iscritto' }
+  | { esito: 'rifiutato'; motivo: MotivoRifiutoUscita };
+
 export type TipoEvento =
   | 'creata'
   | 'modificata'
