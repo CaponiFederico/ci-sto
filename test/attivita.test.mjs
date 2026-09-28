@@ -3,22 +3,9 @@ import { svuotaFirestore } from './emulatore.mjs';
 import assert from 'node:assert/strict';
 import { after, beforeEach, describe, it } from 'node:test';
 
-import { creaAttivita, validaNuovaAttivita } from '../apps/api/dist/attivita.js';
+import { validaNuovaAttivita } from '../apps/api/dist/attivita.js';
 import { db } from '../apps/api/dist/firestore.js';
-
-const ADESSO = Date.UTC(2026, 9, 1, 12, 0);
-const DOMANI = ADESSO + 24 * 60 * 60 * 1000;
-
-const valida = {
-  titolo: 'Calcetto',
-  descrizione: 'Cerco otto persone',
-  categoria: 'sport',
-  inizio: DOMANI,
-  durataMinuti: 90,
-  luogo: { testo: 'Campo CUS', lat: 43.7169, lon: 10.3917 },
-  capacita: 8,
-  politicaCoda: 'fifo',
-};
+import { ADESSO, attivitaDiProva, attivitaValida as valida } from './dati.mjs';
 
 function errori(dati) {
   const esito = validaNuovaAttivita(dati, ADESSO);
@@ -73,8 +60,7 @@ describe('validazione', () => {
 
 describe('creazione', () => {
   it('scrive l attività con i campi che decide il server', async () => {
-    const { valore } = validaNuovaAttivita({ ...valida, postiOccupati: 5 }, ADESSO);
-    const id = await creaAttivita('manuela', valore, ADESSO);
+    const id = await attivitaDiProva({ postiOccupati: 5 });
 
     const attivita = (await db.collection('attivita').doc(id).get()).data();
     assert.equal(attivita.organizzatore, 'manuela');
@@ -85,8 +71,7 @@ describe('creazione', () => {
   });
 
   it('registra la creazione nel diario, nella stessa scrittura', async () => {
-    const { valore } = validaNuovaAttivita(valida, ADESSO);
-    const id = await creaAttivita('manuela', valore, ADESSO);
+    const id = await attivitaDiProva();
 
     const eventi = await db.collection('attivita').doc(id).collection('eventi').get();
     assert.equal(eventi.size, 1);
