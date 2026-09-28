@@ -17,6 +17,8 @@ export const CAPACITA_MASSIMA = 100;
 
 export type Categoria = 'sport' | 'studio' | 'trasporto' | 'svago' | 'altro';
 
+export const CATEGORIE: readonly Categoria[] = ['sport', 'studio', 'trasporto', 'svago', 'altro'];
+
 export type StatoAttivita = 'aperta' | 'completa' | 'annullata';
 
 export type StatoPartecipante = 'confermato' | 'in_attesa' | 'da_confermare';
@@ -60,6 +62,17 @@ export interface Attivita {
   versione: number;
   creataIl: number;
   modificataIl: number;
+}
+
+export interface NuovaAttivita {
+  titolo: string;
+  descrizione: string;
+  categoria: Categoria;
+  inizio: number;
+  durataMinuti: number;
+  luogo: Luogo;
+  capacita: number;
+  politicaCoda: PoliticaCoda;
 }
 
 export interface Partecipante {

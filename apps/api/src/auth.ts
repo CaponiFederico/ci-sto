@@ -39,3 +39,12 @@ export async function richiediAutenticazione(req: Request, res: Response, next: 
     res.status(401).json({ error: 'token_non_valido' });
   }
 }
+
+// Autenticato non basta: senza il claim l'utente è fuori dalle liste dei domini.
+export function richiediAteneo(req: Request, res: Response, next: NextFunction) {
+  if ((req as RichiestaAutenticata).token.ateneo !== true) {
+    res.status(403).json({ error: 'non_ammesso' });
+    return;
+  }
+  next();
+}

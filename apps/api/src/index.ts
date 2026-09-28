@@ -2,8 +2,10 @@ import './ambiente.js';
 
 import cors from 'cors';
 import express from 'express';
+import { creaAttivita, validaNuovaAttivita } from './attivita.js';
 import {
   appartieneAllAteneo,
+  richiediAteneo,
   richiediAutenticazione,
   type RichiestaAutenticata,
 } from './auth.js';
@@ -59,6 +61,17 @@ app.post('/v1/session', richiediAutenticazione, async (req, res) => {
   await riferimento.set(profilo, { merge: true });
 
   res.json({ ateneo: true, email, aggiornaToken: daConcedere });
+});
+
+app.post('/v1/attivita', richiediAutenticazione, richiediAteneo, async (req, res) => {
+  const esito = validaNuovaAttivita(req.body);
+  if (!esito.ok) {
+    res.status(400).json({ error: 'dati_non_validi', campi: esito.errori });
+    return;
+  }
+
+  const id = await creaAttivita((req as RichiestaAutenticata).token.uid, esito.valore);
+  res.status(201).json({ id });
 });
 
 // Gestore d'errore: con meno di quattro parametri Express non lo invoca mai.
