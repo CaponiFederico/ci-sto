@@ -64,22 +64,28 @@ describe('creazione', () => {
 
     const attivita = (await db.collection('attivita').doc(id).get()).data();
     assert.equal(attivita.organizzatore, 'manuela');
-    assert.equal(attivita.postiOccupati, 0);
+    assert.equal(attivita.postiOccupati, 1);
     assert.equal(attivita.stato, 'aperta');
     assert.equal(attivita.versione, 1);
     assert.equal(attivita.creataIl, ADESSO);
   });
 
-  it('registra la creazione nel diario, nella stessa scrittura', async () => {
+  it("iscrive l'organizzatore come confermato", async () => {
     const id = await attivitaDiProva();
+    const partecipanti = await db.collection('attivita').doc(id).collection('partecipanti').get();
+    assert.deepEqual(
+      partecipanti.docs.map((d) => [d.id, d.get('stato')]),
+      [['manuela', 'confermato']],
+    );
+  });
 
+  it('registra creazione e iscrizione nel diario, nella stessa scrittura', async () => {
+    const id = await attivitaDiProva();
     const eventi = await db.collection('attivita').doc(id).collection('eventi').get();
-    assert.equal(eventi.size, 1);
-    assert.deepEqual(eventi.docs[0].data(), {
-      tipo: 'creata',
-      utente: 'manuela',
-      quando: ADESSO,
-      versione: 1,
-    });
+    const tipi = eventi.docs.map((d) => d.data()).sort((a, b) => a.tipo.localeCompare(b.tipo));
+    assert.deepEqual(tipi, [
+      { tipo: 'creata', utente: 'manuela', quando: ADESSO, versione: 1 },
+      { tipo: 'iscritto', utente: 'manuela', quando: ADESSO, versione: 1 },
+    ]);
   });
 });

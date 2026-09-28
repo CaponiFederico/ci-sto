@@ -9,6 +9,7 @@ import {
   type Evento,
   type Luogo,
   type NuovaAttivita,
+  type Partecipante,
 } from 'modello';
 import { db } from './firestore.js';
 
@@ -103,19 +104,31 @@ export async function creaAttivita(organizzatore: string, nuova: NuovaAttivita, 
 
   const attivita: Attivita = {
     ...nuova,
-    postiOccupati: 0,
+    postiOccupati: 1,
     organizzatore,
     stato: 'aperta',
     versione: 1,
     creataIl: adesso,
     modificataIl: adesso,
   };
-  const evento: Evento = { tipo: 'creata', utente: organizzatore, quando: adesso, versione: 1 };
+  // L'organizzatore partecipa
+  const iscrizione: Partecipante = {
+    stato: 'confermato',
+    iscrittoIl: adesso,
+    punteggio: 0,
+    versioneAccettata: 1,
+    confermaEntro: null,
+  };
+  const creata: Evento = { tipo: 'creata', utente: organizzatore, quando: adesso, versione: 1 };
+  const iscritto: Evento = { ...creata, tipo: 'iscritto' };
 
   // Un batch basta: il documento è nuovo, nessuno può contenderlo.
+  const eventi = riferimento.collection(SOTTOCOLLEZIONI.eventi);
   const batch = db.batch();
   batch.set(riferimento, attivita);
-  batch.set(riferimento.collection(SOTTOCOLLEZIONI.eventi).doc(), evento);
+  batch.set(riferimento.collection(SOTTOCOLLEZIONI.partecipanti).doc(organizzatore), iscrizione);
+  batch.set(eventi.doc(), creata);
+  batch.set(eventi.doc(), iscritto);
   await batch.commit();
 
   return riferimento.id;

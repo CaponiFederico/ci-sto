@@ -83,6 +83,13 @@ export interface Partecipante {
   confermaEntro: number | null;
 }
 
+export type MotivoRifiuto = 'inesistente' | 'annullata' | 'iniziata';
+
+export type EsitoIscrizione =
+  | { esito: 'confermato' }
+  | { esito: 'in_attesa'; posizione: number }
+  | { esito: 'rifiutato'; motivo: MotivoRifiuto };
+
 export type TipoEvento =
   | 'creata'
   | 'modificata'
