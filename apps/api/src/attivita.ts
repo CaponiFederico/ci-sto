@@ -105,6 +105,7 @@ export async function creaAttivita(organizzatore: string, nuova: NuovaAttivita, 
   const attivita: Attivita = {
     ...nuova,
     postiOccupati: 1,
+    inAttesa: 0,
     organizzatore,
     stato: 'aperta',
     versione: 1,

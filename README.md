@@ -75,7 +75,14 @@ Le Security Rules sono verificate sull'emulatore
 npm test
 ```
 
-Il comando avvia l'emulatore Firestore, esegue i test e lo spegne.
+Il comando avvia l'emulatore Firestore, esegue i test e lo spegne. Il test delle
+iscrizioni simultanee gira 3 volte
+
+Per la verifica completa, 20 giri (qualche minuto):
+
+```bash
+npm run test:concorrenza
+```
 
 ## Deploy
 

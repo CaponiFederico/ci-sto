@@ -1,4 +1,4 @@
-import type { QueryDocumentSnapshot } from 'firebase-admin/firestore';
+import type { CollectionReference, Transaction } from 'firebase-admin/firestore';
 import {
   COLLEZIONI,
   SOTTOCOLLEZIONI,
@@ -10,41 +10,54 @@ import {
 } from 'modello';
 import { db } from './firestore.js';
 
+// Sotto contesa 
+const TENTATIVI = 10;
+
 function rifiutato(motivo: MotivoRifiuto): EsitoIscrizione {
   return { esito: 'rifiutato', motivo };
 }
 
-// A parità di istante decide l'uid
-function ordineDiArrivo(a: QueryDocumentSnapshot, b: QueryDocumentSnapshot) {
-  const differenza = (a.get('iscrittoIl') as number) - (b.get('iscrittoIl') as number);
-  return differenza !== 0 ? differenza : a.id.localeCompare(b.id);
+// Come sono ordinati
+async function posizioneInCoda(
+  tx: Transaction,
+  partecipanti: CollectionReference,
+  uid: string,
+  iscrittoIl: number,
+) {
+  const coda = await tx.get(partecipanti.where('stato', '==', 'in_attesa'));
+  const davanti = coda.docs.filter((d) => {
+    const t = d.get('iscrittoIl') as number;
+    return d.id !== uid && (t < iscrittoIl || (t === iscrittoIl && d.id < uid));
+  });
+  return davanti.length + 1;
 }
 
 export async function iscrivi(
   idAttivita: string,
   uid: string,
-  adesso = Date.now(),
+  orologio: () => number = Date.now,
 ): Promise<EsitoIscrizione> {
   const attivitaRif = db.collection(COLLEZIONI.attivita).doc(idAttivita);
   const partecipanti = attivitaRif.collection(SOTTOCOLLEZIONI.partecipanti);
   const partecipanteRif = partecipanti.doc(uid);
 
   return db.runTransaction(async (tx) => {
+    // Letto a ogni tentativo
+    const adesso = orologio();
+
     // Firestore vuole tutte le letture prima della prima scrittura.
     const attivitaDoc = await tx.get(attivitaRif);
-    const partecipanteDoc = await tx.get(partecipanteRif);
-    const coda = await tx.get(partecipanti.where('stato', '==', 'in_attesa'));
-
     if (!attivitaDoc.exists) return rifiutato('inesistente');
     const attivita = attivitaDoc.data() as Attivita;
 
     if (attivita.stato === 'annullata') return rifiutato('annullata');
 
     // Richiesta ripetuta, o dell'organizzatore: stesso esito, nessuna scrittura.
+    const partecipanteDoc = await tx.get(partecipanteRif);
     if (partecipanteDoc.exists) {
-      if (partecipanteDoc.get('stato') !== 'in_attesa') return { esito: 'confermato' };
-      const posizione = coda.docs.sort(ordineDiArrivo).findIndex((d) => d.id === uid) + 1;
-      return { esito: 'in_attesa', posizione };
+      const { stato, iscrittoIl } = partecipanteDoc.data() as Partecipante;
+      if (stato !== 'in_attesa') return { esito: 'confermato' };
+      return { esito: 'in_attesa', posizione: await posizioneInCoda(tx, partecipanti, uid, iscrittoIl) };
     }
 
     if (attivita.inizio <= adesso) return rifiutato('iniziata');
@@ -67,7 +80,12 @@ export async function iscrivi(
     tx.set(partecipanteRif, partecipante);
     tx.set(attivitaRif.collection(SOTTOCOLLEZIONI.eventi).doc(), evento);
 
-    if (!confermato) return { esito: 'in_attesa', posizione: coda.size + 1 };
+    // Due ingressi simultanei vanno in conflitto.
+    if (!confermato) {
+      const inAttesa = attivita.inAttesa + 1;
+      tx.update(attivitaRif, { inAttesa } satisfies Partial<Attivita>);
+      return { esito: 'in_attesa', posizione: inAttesa };
+    }
 
     const postiOccupati = attivita.postiOccupati + 1;
     tx.update(attivitaRif, {
@@ -76,5 +94,5 @@ export async function iscrivi(
     } satisfies Partial<Attivita>);
 
     return { esito: 'confermato' };
-  });
+  }, { maxAttempts: TENTATIVI });
 }

@@ -65,6 +65,7 @@ describe('creazione', () => {
     const attivita = (await db.collection('attivita').doc(id).get()).data();
     assert.equal(attivita.organizzatore, 'manuela');
     assert.equal(attivita.postiOccupati, 1);
+    assert.equal(attivita.inAttesa, 0);
     assert.equal(attivita.stato, 'aperta');
     assert.equal(attivita.versione, 1);
     assert.equal(attivita.creataIl, ADESSO);

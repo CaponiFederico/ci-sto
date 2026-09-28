@@ -56,6 +56,7 @@ export interface Attivita {
   luogo: Luogo;
   capacita: number;
   postiOccupati: number;
+  inAttesa: number;
   organizzatore: string;
   politicaCoda: PoliticaCoda;
   stato: StatoAttivita;
