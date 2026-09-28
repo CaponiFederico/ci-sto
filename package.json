@@ -20,7 +20,7 @@
     "utente:test": "npm run utente-test --workspace api",
     "preview": "npm run preview --workspace web",
     "test:regole": "firebase emulators:exec --only firestore \"node --test test/regole.test.mjs\"",
-    "test": "npm run build:modello && npm run build:api && firebase emulators:exec --only firestore \"node --test --test-concurrency=1 test/*.test.mjs\"",
+    "test": "npm run build:modello && npm run build:api && firebase emulators:exec --only auth,firestore \"node --test --test-concurrency=1 test/*.test.mjs\"",
     "test:concorrenza": "npm run build:modello && npm run build:api && firebase emulators:exec --only firestore \"node --test --test-name-pattern=concorrenza test/iscrizioni.test.mjs\"",
     "emulatori": "firebase emulators:start",
     "deploy": "npm run build:web && firebase deploy --only hosting",

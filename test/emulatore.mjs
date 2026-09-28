@@ -14,3 +14,12 @@ export async function svuotaFirestore() {
   );
   if (!risposta.ok) throw new Error(`svuotamento dell'emulatore fallito: ${risposta.status}`);
 }
+
+export async function svuotaAuth() {
+  const host = process.env.FIREBASE_AUTH_EMULATOR_HOST;
+  if (!host) throw new Error('FIREBASE_AUTH_EMULATOR_HOST non impostata: lanciare i test con npm test');
+  const risposta = await fetch(`http://${host}/emulator/v1/projects/${progetto}/accounts`, {
+    method: 'DELETE',
+  });
+  if (!risposta.ok) throw new Error(`svuotamento di Auth fallito: ${risposta.status}`);
+}
