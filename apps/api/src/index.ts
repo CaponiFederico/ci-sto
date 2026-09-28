@@ -3,6 +3,7 @@ import './ambiente.js';
 import cors from 'cors';
 import express from 'express';
 import { creaAttivita, validaNuovaAttivita } from './attivita.js';
+import { esci, iscrivi } from './iscrizioni.js';
 import {
   appartieneAllAteneo,
   richiediAteneo,
@@ -72,6 +73,15 @@ app.post('/v1/attivita', richiediAutenticazione, richiediAteneo, async (req, res
 
   const id = await creaAttivita((req as RichiestaAutenticata).token.uid, esito.valore);
   res.status(201).json({ id });
+});
+
+// L'esito è la risposta
+app.post('/v1/attivita/:id/iscrizione', richiediAutenticazione, richiediAteneo, async (req, res) => {
+  res.json(await iscrivi(req.params.id as string, (req as RichiestaAutenticata).token.uid));
+});
+
+app.delete('/v1/attivita/:id/iscrizione', richiediAutenticazione, richiediAteneo, async (req, res) => {
+  res.json(await esci(req.params.id as string, (req as RichiestaAutenticata).token.uid));
 });
 
 // Gestore d'errore: con meno di quattro parametri Express non lo invoca mai.
