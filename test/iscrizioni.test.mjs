@@ -91,7 +91,19 @@ describe('richiesta ripetuta', () => {
   });
 });
 
+const ID_MALFORMATI = ['..', 'a/b', '__x__', ''];
+
 describe('rifiuto', () => {
+  it("se l'id non può essere di un'attività", async () => {
+    id = undefined;
+    for (const malformato of ID_MALFORMATI) {
+      assert.deepEqual(await iscrivi(malformato, 'michele', () => ADESSO), {
+        esito: 'rifiutato',
+        motivo: 'inesistente',
+      });
+    }
+  });
+
   it("se l'attività non esiste", async () => {
     id = undefined;
     assert.deepEqual(await iscrivi('inesistente', 'michele', () => ADESSO), {
@@ -176,6 +188,13 @@ describe('uscita', () => {
     assert.deepEqual(await esci(id, 'nessuno', () => ADESSO + 3), { esito: 'non_iscritto' });
     assert.deepEqual(await esci('inesistente', 'michele', () => ADESSO), { esito: 'non_iscritto' });
     assert.deepEqual(await eventiDi(id, 'uscito'), ['michele']);
+  });
+
+  it("con un id malformato non trova nessuna iscrizione", async () => {
+    id = undefined;
+    for (const malformato of ID_MALFORMATI) {
+      assert.deepEqual(await esci(malformato, 'michele', () => ADESSO), { esito: 'non_iscritto' });
+    }
   });
 
   it("è rifiutata all'organizzatore", async () => {

@@ -14,6 +14,9 @@ import { db } from './firestore.js';
 // Sotto contesa 
 const TENTATIVI = 10;
 
+// Gli id creati da Firestore sono alfanumerici: '..', 'a/b' o '__x__' farebbero fallire la lettura.
+const ID_ATTIVITA = /^[A-Za-z0-9]{1,100}$/;
+
 function rifiutato(motivo: MotivoRifiuto): EsitoIscrizione {
   return { esito: 'rifiutato', motivo };
 }
@@ -38,6 +41,7 @@ export async function iscrivi(
   uid: string,
   orologio: () => number = Date.now,
 ): Promise<EsitoIscrizione> {
+  if (!ID_ATTIVITA.test(idAttivita)) return rifiutato('inesistente');
   const attivitaRif = db.collection(COLLEZIONI.attivita).doc(idAttivita);
   const partecipanti = attivitaRif.collection(SOTTOCOLLEZIONI.partecipanti);
   const partecipanteRif = partecipanti.doc(uid);
@@ -103,6 +107,7 @@ export async function esci(
   uid: string,
   orologio: () => number = Date.now,
 ): Promise<EsitoUscita> {
+  if (!ID_ATTIVITA.test(idAttivita)) return { esito: 'non_iscritto' };
   const attivitaRif = db.collection(COLLEZIONI.attivita).doc(idAttivita);
   const partecipanti = attivitaRif.collection(SOTTOCOLLEZIONI.partecipanti);
   const partecipanteRif = partecipanti.doc(uid);

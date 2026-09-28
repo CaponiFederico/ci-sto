@@ -98,4 +98,9 @@ describe('rotte di iscrizione', () => {
       corpo: { esito: 'rifiutato', motivo: 'organizzatore' },
     });
   });
+
+  it('con un id malformato rispondono con un esito, non con 500', async () => {
+    const risposta = await chiama('POST', '/v1/attivita/a%2Fb/iscrizione', token.michele);
+    assert.deepEqual(risposta, { status: 200, corpo: { esito: 'rifiutato', motivo: 'inesistente' } });
+  });
 });
