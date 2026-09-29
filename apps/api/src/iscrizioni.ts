@@ -1,4 +1,3 @@
-import { FieldPath, type CollectionReference, type Transaction } from 'firebase-admin/firestore';
 import {
   COLLEZIONI,
   SOTTOCOLLEZIONI,
@@ -9,6 +8,7 @@ import {
   type MotivoRifiuto,
   type Partecipante,
 } from 'modello';
+import { leggiCoda } from './coda.js';
 import { db } from './firestore.js';
 
 // Sotto contesa 
@@ -19,21 +19,6 @@ const ID_ATTIVITA = /^[A-Za-z0-9]{1,100}$/;
 
 function rifiutato(motivo: MotivoRifiuto): EsitoIscrizione {
   return { esito: 'rifiutato', motivo };
-}
-
-// Come sono ordinati
-async function posizioneInCoda(
-  tx: Transaction,
-  partecipanti: CollectionReference,
-  uid: string,
-  iscrittoIl: number,
-) {
-  const coda = await tx.get(partecipanti.where('stato', '==', 'in_attesa'));
-  const davanti = coda.docs.filter((d) => {
-    const t = d.get('iscrittoIl') as number;
-    return d.id !== uid && (t < iscrittoIl || (t === iscrittoIl && d.id < uid));
-  });
-  return davanti.length + 1;
 }
 
 export async function iscrivi(
@@ -60,10 +45,11 @@ export async function iscrivi(
     // Richiesta ripetuta, o dell'organizzatore: stesso esito, nessuna scrittura.
     const partecipanteDoc = await tx.get(partecipanteRif);
     if (partecipanteDoc.exists) {
-      const { stato, iscrittoIl, confermaEntro } = partecipanteDoc.data() as Partecipante;
+      const { stato, confermaEntro } = partecipanteDoc.data() as Partecipante;
       if (stato === 'da_confermare') return { esito: 'da_confermare', entro: confermaEntro! };
       if (stato === 'confermato') return { esito: 'confermato' };
-      return { esito: 'in_attesa', posizione: await posizioneInCoda(tx, partecipanti, uid, iscrittoIl) };
+      const coda = await leggiCoda(tx, partecipanti);
+      return { esito: 'in_attesa', posizione: coda.findIndex((p) => p.id === uid) + 1 };
     }
 
     if (attivita.inizio <= adesso) return rifiutato('iniziata');
@@ -135,15 +121,7 @@ export async function esci(
     // Il primo in coda si cerca solo se si libera un posto
     const primo =
       stato !== 'in_attesa' && attivita.inAttesa > 0
-        ? (
-            await tx.get(
-              partecipanti
-                .where('stato', '==', 'in_attesa')
-                .orderBy('iscrittoIl')
-                .orderBy(FieldPath.documentId())
-                .limit(1),
-            )
-          ).docs[0]
+        ? (await leggiCoda(tx, partecipanti))[0]
         : undefined;
 
     // Chi doveva riconfermare teneva il posto
