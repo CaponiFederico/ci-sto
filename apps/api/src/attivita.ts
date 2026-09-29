@@ -85,8 +85,15 @@ export function validaNuovaAttivita(dati: unknown, adesso = Date.now()): Esito<N
   return errori.length > 0 ? { ok: false, errori } : { ok: true, valore };
 }
 
-// Orario e luogo 
-export const CAMPI_MODIFICABILI = ['titolo', 'descrizione', 'categoria', 'capacita'] as const;
+export const CAMPI_MODIFICABILI = [
+  'titolo',
+  'descrizione',
+  'categoria',
+  'capacita',
+  'inizio',
+  'durataMinuti',
+  'luogo',
+] as const;
 
 export type Modifica = Partial<Pick<NuovaAttivita, (typeof CAMPI_MODIFICABILI)[number]>>;
 

@@ -2,7 +2,9 @@ import {
   COLLEZIONI,
   SOTTOCOLLEZIONI,
   type Attivita,
+  type EntitaModifica,
   type EsitoModifica,
+  type Luogo,
   type Evento,
   type MotivoRifiutoModifica,
   type Partecipante,
@@ -10,6 +12,36 @@ import {
 import type { Modifica } from './attivita.js';
 import { leggiCoda, leggiPosti } from './coda.js';
 import { db, ID_ATTIVITA, TENTATIVI } from './firestore.js';
+
+// Oltre questo spostamento, di inizio o di fine
+export const SOGLIA_MINUTI = 30;
+export const RICONFERMA_ORE = 24;
+
+const MINUTO = 60 * 1000;
+
+// GHorno di calendario
+const giorno = (istante: number) =>
+  new Intl.DateTimeFormat('it-IT', { timeZone: 'Europe/Rome', dateStyle: 'short' }).format(istante);
+
+// Con le coordinate conta il punto
+export function stessoLuogo(a: Luogo, b: Luogo) {
+  const coordinate = (l: Luogo) => l.lat !== undefined && l.lon !== undefined;
+  if (coordinate(a) && coordinate(b)) return a.lat === b.lat && a.lon === b.lon;
+  return a.testo === b.testo;
+}
+
+type Quando = Pick<Attivita, 'inizio' | 'durataMinuti' | 'luogo'>;
+
+export function entitaModifica(prima: Quando, dopo: Quando): EntitaModifica {
+  const fine = (q: Quando) => q.inizio + q.durataMinuti * MINUTO;
+  const soglia = SOGLIA_MINUTI * MINUTO;
+  const minore =
+    giorno(prima.inizio) === giorno(dopo.inizio) &&
+    Math.abs(dopo.inizio - prima.inizio) <= soglia &&
+    Math.abs(fine(dopo) - fine(prima)) <= soglia &&
+    stessoLuogo(prima.luogo, dopo.luogo);
+  return minore ? 'minore' : 'sostanziale';
+}
 
 function rifiutato(motivo: MotivoRifiutoModifica): EsitoModifica {
   return { esito: 'rifiutato', motivo };
@@ -43,8 +75,8 @@ export async function modificaAttivita(
     if (attivita.inizio <= adesso) return rifiutato('iniziata');
 
     // Solo ciò che cambia davvero: ripetere la stessa modifica non crea una versione nuova.
-    const campi = (Object.keys(modifica) as (keyof Modifica)[]).filter(
-      (c) => modifica[c] !== attivita[c],
+    const campi = (Object.keys(modifica) as (keyof Modifica)[]).filter((c) =>
+      c === 'luogo' ? !stessoLuogo(modifica.luogo!, attivita.luogo) : modifica[c] !== attivita[c],
     );
     if (campi.length === 0) return { esito: 'invariata', versione: attivita.versione };
 
@@ -55,12 +87,26 @@ export async function modificaAttivita(
     // Conferma necessaria in caso riduzione posti
     if (eccesso > 0 && !forza) return { esito: 'conferma_richiesta', retrocessi: eccesso };
 
-    const retrocessi = eccesso > 0 ? (await leggiPosti(tx, partecipanti, uid)).slice(0, eccesso) : [];
+    const dopo: Quando = {
+      inizio: modifica.inizio ?? attivita.inizio,
+      durataMinuti: modifica.durataMinuti ?? attivita.durataMinuti,
+      luogo: modifica.luogo ?? attivita.luogo,
+    };
+    const tocca = campi.some((c) => c === 'inizio' || c === 'durataMinuti' || c === 'luogo');
+    const entita = tocca ? entitaModifica(attivita, dopo) : null;
+    const sostanziale = entita === 'sostanziale';
+
+    // Chi ha il posto, e chi lo riceve dalla coda
+    const posti = eccesso > 0 || sostanziale ? await leggiPosti(tx, partecipanti, uid) : [];
+    const retrocessi = posti.slice(0, eccesso);
+    const restano = posti.slice(eccesso);
     const promossi =
       liberi > 0 && attivita.inAttesa > 0 ? (await leggiCoda(tx, partecipanti)).slice(0, liberi) : [];
 
     const versione = attivita.versione + 1;
     const evento = (tipo: Evento['tipo'], utente: string): Evento => ({ tipo, utente, quando: adesso, versione });
+    // Il tempo di decidere, ma mai oltre l'inizio
+    const confermaEntro = Math.min(adesso + RICONFERMA_ORE * 60 * MINUTO, dopo.inizio);
 
     for (const p of retrocessi) {
       // retrocessoIl li mette davanti a chi non ha mai avuto il posto
@@ -72,36 +118,55 @@ export async function modificaAttivita(
       } satisfies Partial<Partecipante>);
       tx.set(eventi.doc(), evento('retrocesso', p.id));
     }
+    // Anche chi entra adesso aveva accettato l'attività 
     for (const p of promossi) {
       tx.update(p.ref, {
-        stato: 'confermato',
+        stato: sostanziale ? 'da_confermare' : 'confermato',
         confermatoIl: adesso,
         retrocessoIl: null,
+        confermaEntro: sostanziale ? confermaEntro : null,
       } satisfies Partial<Partecipante>);
       tx.set(eventi.doc(), evento('promosso', p.id));
     }
+    if (sostanziale) {
+      for (const p of restano) {
+        tx.update(p.ref, { stato: 'da_confermare', confermaEntro } satisfies Partial<Partecipante>);
+      }
+      // L'organizzatore accetta la versione che ha scritto 
+      tx.update(partecipanti.doc(uid), { versioneAccettata: versione } satisfies Partial<Partecipante>);
+    }
 
     const postiOccupati = attivita.postiOccupati - retrocessi.length + promossi.length;
+    const daConfermare = sostanziale
+      ? restano.length + promossi.length
+      : attivita.daConfermare - retrocessi.filter((p) => p.stato === 'da_confermare').length;
     const cambiati: Modifica = Object.fromEntries(campi.map((c) => [c, modifica[c]]));
 
-    // versioneSostanziale resta ferma
     tx.update(attivitaRif, {
       ...cambiati,
       postiOccupati,
       inAttesa: attivita.inAttesa + retrocessi.length - promossi.length,
-      daConfermare: attivita.daConfermare - retrocessi.filter((p) => p.stato === 'da_confermare').length,
+      daConfermare,
       stato: postiOccupati >= capacita ? 'completa' : 'aperta',
       versione,
+      // La coda offline confronta questa
+      versioneSostanziale: sostanziale ? versione : attivita.versioneSostanziale,
       modificataIl: adesso,
     } satisfies Partial<Attivita>);
-    tx.set(eventi.doc(), { ...evento('modificata', uid), campiModificati: campi });
+    tx.set(eventi.doc(), {
+      ...evento('modificata', uid),
+      campiModificati: campi,
+      ...(entita && { entita }),
+    });
 
     return {
       esito: 'modificata',
       versione,
       campi,
+      entita,
       promossi: promossi.map((p) => p.id),
       retrocessi: retrocessi.map((p) => p.id),
+      daConfermare: sostanziale ? [...restano, ...promossi].map((p) => p.id) : [],
     };
   }, { maxAttempts: TENTATIVI });
 }

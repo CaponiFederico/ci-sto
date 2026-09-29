@@ -103,10 +103,21 @@ export type EsitoUscita =
   | { esito: 'non_iscritto' }
   | { esito: 'rifiutato'; motivo: MotivoRifiutoUscita };
 
+// Minore: gli iscritti restano; sostanziale: devono riconfermare.
+export type EntitaModifica = 'minore' | 'sostanziale';
+
 export type MotivoRifiutoModifica = 'inesistente' | 'non_organizzatore' | 'annullata' | 'iniziata';
 
 export type EsitoModifica =
-  | { esito: 'modificata'; versione: number; campi: string[]; promossi: string[]; retrocessi: string[] }
+  | {
+      esito: 'modificata';
+      versione: number;
+      campi: string[];
+      entita: EntitaModifica | null;
+      promossi: string[];
+      retrocessi: string[];
+      daConfermare: string[];
+    }
   | { esito: 'invariata'; versione: number }
   | { esito: 'conferma_richiesta'; retrocessi: number }
   | { esito: 'rifiutato'; motivo: MotivoRifiutoModifica };
@@ -128,6 +139,7 @@ export interface Evento {
   quando: number;
   versione: number;
   campiModificati?: string[];
+  entita?: EntitaModifica;
 }
 
 export interface Statistiche {
