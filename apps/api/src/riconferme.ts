@@ -59,9 +59,6 @@ export async function applicaScadenze(idAttivita: string, orologio: () => number
   if (!ID_ATTIVITA.test(idAttivita)) return nessuno;
   const rif = riferimenti(idAttivita);
 
-  const prima = await rif.attivita.get();
-  if (!prima.exists || prima.get('daConfermare') === 0) return nessuno;
-
   return db.runTransaction(async (tx) => {
     const adesso = orologio();
 

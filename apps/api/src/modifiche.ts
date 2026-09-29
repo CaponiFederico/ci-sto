@@ -19,10 +19,6 @@ export const SOGLIA_MINUTI = 30;
 
 const MINUTO = 60 * 1000;
 
-// GHorno di calendario
-const giorno = (istante: number) =>
-  new Intl.DateTimeFormat('it-IT', { timeZone: 'Europe/Rome', dateStyle: 'short' }).format(istante);
-
 // Con le coordinate conta il punto
 export function stessoLuogo(a: Luogo, b: Luogo) {
   const coordinate = (l: Luogo) => l.lat !== undefined && l.lon !== undefined;
@@ -36,7 +32,6 @@ export function entitaModifica(prima: Quando, dopo: Quando): EntitaModifica {
   const fine = (q: Quando) => q.inizio + q.durataMinuti * MINUTO;
   const soglia = SOGLIA_MINUTI * MINUTO;
   const minore =
-    giorno(prima.inizio) === giorno(dopo.inizio) &&
     Math.abs(dopo.inizio - prima.inizio) <= soglia &&
     Math.abs(fine(dopo) - fine(prima)) <= soglia &&
     stessoLuogo(prima.luogo, dopo.luogo);
