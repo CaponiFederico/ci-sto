@@ -52,51 +52,51 @@ function luogo(valore: unknown): Luogo | null {
   return { ...risultato, lat, lon };
 }
 
-// Costruisce il valore campo per campo: ciò che il client aggiunge non arriva nel documento.
+type Validatore<T> = (valore: unknown, adesso: number) => T | null;
+
+// Una regola per campo
+const validatori: { [C in keyof NuovaAttivita]: Validatore<NuovaAttivita[C]> } = {
+  titolo: (v) => testo(v, 120),
+  descrizione: (v) => testo(v ?? '', 2000, false),
+  categoria: (v) => CATEGORIE.find((c) => c === v) ?? null,
+  inizio: (v, adesso) => (typeof v === 'number' && v > adesso ? v : null),
+  durataMinuti: (v) => intero(v, DURATA_MINIMA, DURATA_MASSIMA),
+  luogo,
+  capacita: (v) => intero(v, CAPACITA_MINIMA, CAPACITA_MASSIMA),
+  politicaCoda: (v) => POLITICHE.find((p) => p === (v ?? 'fifo')) ?? null,
+};
+
+// Costruisce il valore campo per campo
+function valida<C extends keyof NuovaAttivita>(d: Record<string, unknown>, campi: readonly C[], adesso: number) {
+  const errori: string[] = [];
+  const valore: Partial<NuovaAttivita> = {};
+  for (const campo of campi) {
+    const pulito = validatori[campo](d[campo], adesso);
+    if (pulito === null) errori.push(campo);
+    else valore[campo] = pulito;
+  }
+  return { errori, valore: valore as Pick<NuovaAttivita, C> };
+}
+
 export function validaNuovaAttivita(dati: unknown, adesso = Date.now()): Esito<NuovaAttivita> {
   if (typeof dati !== 'object' || dati === null) return { ok: false, errori: ['corpo'] };
+  const campi = Object.keys(validatori) as (keyof NuovaAttivita)[];
+  const { errori, valore } = valida(dati as Record<string, unknown>, campi, adesso);
+  return errori.length > 0 ? { ok: false, errori } : { ok: true, valore };
+}
+
+// Per ora solo i campi che non toccano gli iscritti
+export const CAMPI_MODIFICABILI = ['titolo', 'descrizione', 'categoria'] as const;
+
+export type Modifica = Partial<Pick<NuovaAttivita, (typeof CAMPI_MODIFICABILI)[number]>>;
+
+export function validaModifica(dati: unknown, adesso = Date.now()): Esito<Modifica> {
+  if (typeof dati !== 'object' || dati === null) return { ok: false, errori: ['corpo'] };
   const d = dati as Record<string, unknown>;
-  const errori: string[] = [];
-
-  const titolo = testo(d.titolo, 120);
-  if (titolo === null) errori.push('titolo');
-
-  const descrizione = testo(d.descrizione ?? '', 2000, false);
-  if (descrizione === null) errori.push('descrizione');
-
-  const categoria = CATEGORIE.find((c) => c === d.categoria);
-  if (!categoria) errori.push('categoria');
-
-  const inizio = typeof d.inizio === 'number' && d.inizio > adesso ? d.inizio : null;
-  if (inizio === null) errori.push('inizio');
-
-  const durataMinuti = intero(d.durataMinuti, DURATA_MINIMA, DURATA_MASSIMA);
-  if (durataMinuti === null) errori.push('durataMinuti');
-
-  const dove = luogo(d.luogo);
-  if (dove === null) errori.push('luogo');
-
-  const capacita = intero(d.capacita, CAPACITA_MINIMA, CAPACITA_MASSIMA);
-  if (capacita === null) errori.push('capacita');
-
-  const politicaCoda = POLITICHE.find((p) => p === (d.politicaCoda ?? 'fifo'));
-  if (!politicaCoda) errori.push('politicaCoda');
-
-  if (errori.length > 0) return { ok: false, errori };
-
-  return {
-    ok: true,
-    valore: {
-      titolo: titolo!,
-      descrizione: descrizione!,
-      categoria: categoria!,
-      inizio: inizio!,
-      durataMinuti: durataMinuti!,
-      luogo: dove!,
-      capacita: capacita!,
-      politicaCoda: politicaCoda!,
-    },
-  };
+  const presenti = CAMPI_MODIFICABILI.filter((c) => d[c] !== undefined);
+  if (presenti.length === 0) return { ok: false, errori: ['nessun_campo'] };
+  const { errori, valore } = valida(d, presenti, adesso);
+  return errori.length > 0 ? { ok: false, errori } : { ok: true, valore };
 }
 
 export async function creaAttivita(organizzatore: string, nuova: NuovaAttivita, adesso = Date.now()) {

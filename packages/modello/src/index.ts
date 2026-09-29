@@ -103,6 +103,13 @@ export type EsitoUscita =
   | { esito: 'non_iscritto' }
   | { esito: 'rifiutato'; motivo: MotivoRifiutoUscita };
 
+export type MotivoRifiutoModifica = 'inesistente' | 'non_organizzatore' | 'annullata' | 'iniziata';
+
+export type EsitoModifica =
+  | { esito: 'modificata'; versione: number; campi: string[] }
+  | { esito: 'invariata'; versione: number }
+  | { esito: 'rifiutato'; motivo: MotivoRifiutoModifica };
+
 export type TipoEvento =
   | 'creata'
   | 'modificata'

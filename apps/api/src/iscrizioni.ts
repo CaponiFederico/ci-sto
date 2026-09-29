@@ -9,13 +9,7 @@ import {
   type Partecipante,
 } from 'modello';
 import { leggiCoda } from './coda.js';
-import { db } from './firestore.js';
-
-// Sotto contesa 
-const TENTATIVI = 10;
-
-// Gli id creati da Firestore sono alfanumerici: '..', 'a/b' o '__x__' farebbero fallire la lettura.
-const ID_ATTIVITA = /^[A-Za-z0-9]{1,100}$/;
+import { db, ID_ATTIVITA, TENTATIVI } from './firestore.js';
 
 function rifiutato(motivo: MotivoRifiuto): EsitoIscrizione {
   return { esito: 'rifiutato', motivo };
