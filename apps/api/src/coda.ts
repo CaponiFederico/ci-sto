@@ -10,6 +10,7 @@ export interface InCoda {
   ref: DocumentReference;
   iscrittoIl: number;
   retrocessoIl: number | null;
+  versioneAccettata: number;
 }
 
 type Ordinabile = Pick<InCoda, 'id' | 'iscrittoIl' | 'retrocessoIl'>;
@@ -29,8 +30,8 @@ export function ordineCoda(a: Ordinabile, b: Ordinabile) {
 export async function leggiCoda(tx: Transaction, partecipanti: CollectionReference) {
   const snapshot = await tx.get(partecipanti.where('stato', '==', 'in_attesa'));
   const coda: InCoda[] = snapshot.docs.map((d) => {
-    const { iscrittoIl, retrocessoIl } = d.data() as Partecipante;
-    return { id: d.id, ref: d.ref, iscrittoIl, retrocessoIl };
+    const { iscrittoIl, retrocessoIl, versioneAccettata } = d.data() as Partecipante;
+    return { id: d.id, ref: d.ref, iscrittoIl, retrocessoIl, versioneAccettata };
   });
   return coda.sort(ordineCoda);
 }

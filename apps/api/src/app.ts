@@ -5,6 +5,7 @@ import express from 'express';
 import { creaAttivita, validaModifica, validaNuovaAttivita } from './attivita.js';
 import { esci, iscrivi } from './iscrizioni.js';
 import { modificaAttivita } from './modifiche.js';
+import { riconferma } from './riconferme.js';
 import {
   appartieneAllAteneo,
   richiediAteneo,
@@ -96,6 +97,10 @@ app.post('/v1/attivita/:id/iscrizione', richiediAutenticazione, richiediAteneo, 
 
 app.delete('/v1/attivita/:id/iscrizione', richiediAutenticazione, richiediAteneo, async (req, res) => {
   res.json(await esci(req.params.id as string, (req as RichiestaAutenticata).token.uid));
+});
+
+app.post('/v1/attivita/:id/riconferma', richiediAutenticazione, richiediAteneo, async (req, res) => {
+  res.json(await riconferma(req.params.id as string, (req as RichiestaAutenticata).token.uid));
 });
 
 // Gestore d'errore: con meno di quattro parametri Express non lo invoca mai.

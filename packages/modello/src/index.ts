@@ -62,7 +62,7 @@ export interface Attivita {
   politicaCoda: PoliticaCoda;
   stato: StatoAttivita;
   versione: number;
-  versioneSostanziale: number;
+  versioneMaggiore: number;
   creataIl: number;
   modificataIl: number;
 }
@@ -103,8 +103,14 @@ export type EsitoUscita =
   | { esito: 'non_iscritto' }
   | { esito: 'rifiutato'; motivo: MotivoRifiutoUscita };
 
-// Minore: gli iscritti restano; sostanziale: devono riconfermare.
-export type EntitaModifica = 'minore' | 'sostanziale';
+export type MotivoRifiutoRiconferma = 'inesistente' | 'annullata' | 'non_iscritto' | 'in_coda' | 'scaduta';
+
+export type EsitoRiconferma =
+  | { esito: 'confermato' }
+  | { esito: 'rifiutato'; motivo: MotivoRifiutoRiconferma };
+
+// Minore: gli iscritti restano; maggiore: devono riconfermare.
+export type EntitaModifica = 'minore' | 'maggiore';
 
 export type MotivoRifiutoModifica = 'inesistente' | 'non_organizzatore' | 'annullata' | 'iniziata';
 

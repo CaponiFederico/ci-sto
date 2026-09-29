@@ -117,7 +117,7 @@ export async function creaAttivita(organizzatore: string, nuova: NuovaAttivita, 
     organizzatore,
     stato: 'aperta',
     versione: 1,
-    versioneSostanziale: 1,
+    versioneMaggiore: 1,
     creataIl: adesso,
     modificataIl: adesso,
   };

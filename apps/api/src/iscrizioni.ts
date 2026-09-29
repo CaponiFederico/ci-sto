@@ -10,6 +10,7 @@ import {
 } from 'modello';
 import { leggiCoda } from './coda.js';
 import { db, ID_ATTIVITA, TENTATIVI } from './firestore.js';
+import { promuovi, applicaScadenze } from './riconferme.js';
 
 function rifiutato(motivo: MotivoRifiuto): EsitoIscrizione {
   return { esito: 'rifiutato', motivo };
@@ -21,6 +22,8 @@ export async function iscrivi(
   orologio: () => number = Date.now,
 ): Promise<EsitoIscrizione> {
   if (!ID_ATTIVITA.test(idAttivita)) return rifiutato('inesistente');
+  // Un posto non riconfermato in tempo è libero
+  await applicaScadenze(idAttivita, orologio);
   const attivitaRif = db.collection(COLLEZIONI.attivita).doc(idAttivita);
   const partecipanti = attivitaRif.collection(SOTTOCOLLEZIONI.partecipanti);
   const partecipanteRif = partecipanti.doc(uid);
@@ -91,6 +94,7 @@ export async function esci(
   orologio: () => number = Date.now,
 ): Promise<EsitoUscita> {
   if (!ID_ATTIVITA.test(idAttivita)) return { esito: 'non_iscritto' };
+  await applicaScadenze(idAttivita, orologio);
   const attivitaRif = db.collection(COLLEZIONI.attivita).doc(idAttivita);
   const partecipanti = attivitaRif.collection(SOTTOCOLLEZIONI.partecipanti);
   const partecipanteRif = partecipanti.doc(uid);
@@ -119,8 +123,7 @@ export async function esci(
         : undefined;
 
     // Chi doveva riconfermare teneva il posto
-    const contatori: Partial<Attivita> =
-      stato === 'da_confermare' ? { daConfermare: attivita.daConfermare - 1 } : {};
+    const daConfermare = attivita.daConfermare - (stato === 'da_confermare' ? 1 : 0);
 
     const versione = attivita.versione;
     tx.delete(partecipanteRif);
@@ -133,18 +136,16 @@ export async function esci(
 
     // Il posto passa al primo in coda
     if (primo) {
-      tx.update(primo.ref, {
-        stato: 'confermato',
-        confermatoIl: adesso,
-        retrocessoIl: null,
-      } satisfies Partial<Partecipante>);
-      tx.set(eventi.doc(), { tipo: 'promosso', utente: primo.id, quando: adesso, versione } satisfies Evento);
-      tx.update(attivitaRif, { ...contatori, inAttesa: attivita.inAttesa - 1 } satisfies Partial<Attivita>);
+      const primoDaConfermare = promuovi(tx, eventi, primo, attivita, adesso);
+      tx.update(attivitaRif, {
+        daConfermare: daConfermare + (primoDaConfermare ? 1 : 0),
+        inAttesa: attivita.inAttesa - 1,
+      } satisfies Partial<Attivita>);
       return { esito: 'uscito', promosso: primo.id };
     }
 
     tx.update(attivitaRif, {
-      ...contatori,
+      daConfermare,
       postiOccupati: attivita.postiOccupati - 1,
       stato: 'aperta',
     } satisfies Partial<Attivita>);

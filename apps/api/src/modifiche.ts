@@ -12,10 +12,10 @@ import {
 import type { Modifica } from './attivita.js';
 import { leggiCoda, leggiPosti } from './coda.js';
 import { db, ID_ATTIVITA, TENTATIVI } from './firestore.js';
+import { promuovi, scadenzaRiconferma, applicaScadenze } from './riconferme.js';
 
 // Oltre questo spostamento, di inizio o di fine
 export const SOGLIA_MINUTI = 30;
-export const RICONFERMA_ORE = 24;
 
 const MINUTO = 60 * 1000;
 
@@ -40,7 +40,7 @@ export function entitaModifica(prima: Quando, dopo: Quando): EntitaModifica {
     Math.abs(dopo.inizio - prima.inizio) <= soglia &&
     Math.abs(fine(dopo) - fine(prima)) <= soglia &&
     stessoLuogo(prima.luogo, dopo.luogo);
-  return minore ? 'minore' : 'sostanziale';
+  return minore ? 'minore' : 'maggiore';
 }
 
 function rifiutato(motivo: MotivoRifiutoModifica): EsitoModifica {
@@ -59,6 +59,7 @@ export async function modificaAttivita(
   { forza = false, orologio = Date.now }: Opzioni = {},
 ): Promise<EsitoModifica> {
   if (!ID_ATTIVITA.test(idAttivita)) return rifiutato('inesistente');
+  await applicaScadenze(idAttivita, orologio);
   const attivitaRif = db.collection(COLLEZIONI.attivita).doc(idAttivita);
   const partecipanti = attivitaRif.collection(SOTTOCOLLEZIONI.partecipanti);
   const eventi = attivitaRif.collection(SOTTOCOLLEZIONI.eventi);
@@ -94,10 +95,10 @@ export async function modificaAttivita(
     };
     const tocca = campi.some((c) => c === 'inizio' || c === 'durataMinuti' || c === 'luogo');
     const entita = tocca ? entitaModifica(attivita, dopo) : null;
-    const sostanziale = entita === 'sostanziale';
+    const maggiore = entita === 'maggiore';
 
     // Chi ha il posto, e chi lo riceve dalla coda
-    const posti = eccesso > 0 || sostanziale ? await leggiPosti(tx, partecipanti, uid) : [];
+    const posti = eccesso > 0 || maggiore ? await leggiPosti(tx, partecipanti, uid) : [];
     const retrocessi = posti.slice(0, eccesso);
     const restano = posti.slice(eccesso);
     const promossi =
@@ -105,8 +106,8 @@ export async function modificaAttivita(
 
     const versione = attivita.versione + 1;
     const evento = (tipo: Evento['tipo'], utente: string): Evento => ({ tipo, utente, quando: adesso, versione });
-    // Il tempo di decidere, ma mai oltre l'inizio
-    const confermaEntro = Math.min(adesso + RICONFERMA_ORE * 60 * MINUTO, dopo.inizio);
+    const confermaEntro = scadenzaRiconferma(adesso, dopo.inizio);
+    const versioneMaggiore = maggiore ? versione : attivita.versioneMaggiore;
 
     for (const p of retrocessi) {
       // retrocessoIl li mette davanti a chi non ha mai avuto il posto
@@ -118,17 +119,10 @@ export async function modificaAttivita(
       } satisfies Partial<Partecipante>);
       tx.set(eventi.doc(), evento('retrocesso', p.id));
     }
-    // Anche chi entra adesso aveva accettato l'attività 
-    for (const p of promossi) {
-      tx.update(p.ref, {
-        stato: sostanziale ? 'da_confermare' : 'confermato',
-        confermatoIl: adesso,
-        retrocessoIl: null,
-        confermaEntro: sostanziale ? confermaEntro : null,
-      } satisfies Partial<Partecipante>);
-      tx.set(eventi.doc(), evento('promosso', p.id));
-    }
-    if (sostanziale) {
+    // Con una modifica maggiore anche chi entra adesso aveva accettato l'attività di prima
+    const riferimento = { versione, versioneMaggiore, inizio: dopo.inizio };
+    const promossiDaConfermare = promossi.filter((p) => promuovi(tx, eventi, p, riferimento, adesso));
+    if (maggiore) {
       for (const p of restano) {
         tx.update(p.ref, { stato: 'da_confermare', confermaEntro } satisfies Partial<Partecipante>);
       }
@@ -137,9 +131,9 @@ export async function modificaAttivita(
     }
 
     const postiOccupati = attivita.postiOccupati - retrocessi.length + promossi.length;
-    const daConfermare = sostanziale
-      ? restano.length + promossi.length
-      : attivita.daConfermare - retrocessi.filter((p) => p.stato === 'da_confermare').length;
+    const daConfermare =
+      (maggiore ? restano.length : attivita.daConfermare - retrocessi.filter((p) => p.stato === 'da_confermare').length) +
+      promossiDaConfermare.length;
     const cambiati: Modifica = Object.fromEntries(campi.map((c) => [c, modifica[c]]));
 
     tx.update(attivitaRif, {
@@ -150,7 +144,7 @@ export async function modificaAttivita(
       stato: postiOccupati >= capacita ? 'completa' : 'aperta',
       versione,
       // La coda offline confronta questa
-      versioneSostanziale: sostanziale ? versione : attivita.versioneSostanziale,
+      versioneMaggiore,
       modificataIl: adesso,
     } satisfies Partial<Attivita>);
     tx.set(eventi.doc(), {
@@ -166,7 +160,7 @@ export async function modificaAttivita(
       entita,
       promossi: promossi.map((p) => p.id),
       retrocessi: retrocessi.map((p) => p.id),
-      daConfermare: sostanziale ? [...restano, ...promossi].map((p) => p.id) : [],
+      daConfermare: [...(maggiore ? restano : []), ...promossiDaConfermare].map((p) => p.id),
     };
   }, { maxAttempts: TENTATIVI });
 }
