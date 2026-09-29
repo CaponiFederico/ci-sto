@@ -106,8 +106,9 @@ export type EsitoUscita =
 export type MotivoRifiutoModifica = 'inesistente' | 'non_organizzatore' | 'annullata' | 'iniziata';
 
 export type EsitoModifica =
-  | { esito: 'modificata'; versione: number; campi: string[] }
+  | { esito: 'modificata'; versione: number; campi: string[]; promossi: string[]; retrocessi: string[] }
   | { esito: 'invariata'; versione: number }
+  | { esito: 'conferma_richiesta'; retrocessi: number }
   | { esito: 'rifiutato'; motivo: MotivoRifiutoModifica };
 
 export type TipoEvento =

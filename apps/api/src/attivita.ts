@@ -85,8 +85,8 @@ export function validaNuovaAttivita(dati: unknown, adesso = Date.now()): Esito<N
   return errori.length > 0 ? { ok: false, errori } : { ok: true, valore };
 }
 
-// Per ora solo i campi che non toccano gli iscritti
-export const CAMPI_MODIFICABILI = ['titolo', 'descrizione', 'categoria'] as const;
+// Orario e luogo 
+export const CAMPI_MODIFICABILI = ['titolo', 'descrizione', 'categoria', 'capacita'] as const;
 
 export type Modifica = Partial<Pick<NuovaAttivita, (typeof CAMPI_MODIFICABILI)[number]>>;
 

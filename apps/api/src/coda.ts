@@ -3,7 +3,7 @@ import type {
   DocumentReference,
   Transaction,
 } from 'firebase-admin/firestore';
-import type { Partecipante } from 'modello';
+import type { Partecipante, StatoPartecipante } from 'modello';
 
 export interface InCoda {
   id: string;
@@ -33,4 +33,34 @@ export async function leggiCoda(tx: Transaction, partecipanti: CollectionReferen
     return { id: d.id, ref: d.ref, iscrittoIl, retrocessoIl };
   });
   return coda.sort(ordineCoda);
+}
+
+export interface InPosto {
+  id: string;
+  ref: DocumentReference;
+  stato: StatoPartecipante;
+  iscrittoIl: number;
+  confermatoIl: number | null;
+}
+
+type Retrocedibile = Pick<InPosto, 'id' | 'iscrittoIl' | 'confermatoIl'>;
+
+// Ultimo entrato, primo fuori
+export function ordineRetrocessione(a: Retrocedibile, b: Retrocedibile) {
+  const confermaA = a.confermatoIl ?? a.iscrittoIl;
+  const confermaB = b.confermatoIl ?? b.iscrittoIl;
+  if (confermaA !== confermaB) return confermaB - confermaA;
+  return a.id < b.id ? 1 : a.id > b.id ? -1 : 0;
+}
+
+// Chi occupa un posto organizzatore escluso
+export async function leggiPosti(tx: Transaction, partecipanti: CollectionReference, organizzatore: string) {
+  const snapshot = await tx.get(partecipanti.where('stato', 'in', ['confermato', 'da_confermare']));
+  const posti: InPosto[] = snapshot.docs
+    .filter((d) => d.id !== organizzatore)
+    .map((d) => {
+      const { stato, iscrittoIl, confermatoIl } = d.data() as Partecipante;
+      return { id: d.id, ref: d.ref, stato, iscrittoIl, confermatoIl };
+    });
+  return posti.sort(ordineRetrocessione);
 }

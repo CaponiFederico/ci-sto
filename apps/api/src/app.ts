@@ -2,8 +2,9 @@ import './ambiente.js';
 
 import cors from 'cors';
 import express from 'express';
-import { creaAttivita, validaNuovaAttivita } from './attivita.js';
+import { creaAttivita, validaModifica, validaNuovaAttivita } from './attivita.js';
 import { esci, iscrivi } from './iscrizioni.js';
+import { modificaAttivita } from './modifiche.js';
 import {
   appartieneAllAteneo,
   richiediAteneo,
@@ -73,6 +74,19 @@ app.post('/v1/attivita', richiediAutenticazione, richiediAteneo, async (req, res
 
   const id = await creaAttivita((req as RichiestaAutenticata).token.uid, esito.valore);
   res.status(201).json({ id });
+});
+
+// PATCH: si mandano solo i campi da cambiare
+app.patch('/v1/attivita/:id', richiediAutenticazione, richiediAteneo, async (req, res) => {
+  const esito = validaModifica(req.body);
+  if (!esito.ok) {
+    res.status(400).json({ error: 'dati_non_validi', campi: esito.errori });
+    return;
+  }
+
+  const uid = (req as RichiestaAutenticata).token.uid;
+  const forza = req.body.forza === true;
+  res.json(await modificaAttivita(req.params.id as string, uid, esito.valore, { forza }));
 });
 
 // L'esito è la risposta
