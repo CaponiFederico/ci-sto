@@ -100,7 +100,7 @@ export async function modificaAttivita(
     const retrocessi = posti.slice(0, eccesso);
     const restano = posti.slice(eccesso);
     const promossi =
-      liberi > 0 && attivita.inAttesa > 0 ? (await leggiCoda(tx, partecipanti)).slice(0, liberi) : [];
+      liberi > 0 && attivita.inAttesa > 0 ? (await leggiCoda(tx, partecipanti, { politica: attivita.politicaCoda, adesso })).slice(0, liberi) : [];
 
     const versione = attivita.versione + 1;
     const evento = (tipo: Evento['tipo'], utente: string): Evento => ({ tipo, utente, quando: adesso, versione });

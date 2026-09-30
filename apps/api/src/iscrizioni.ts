@@ -45,7 +45,7 @@ export async function iscrivi(
       const { stato, confermaEntro } = partecipanteDoc.data() as Partecipante;
       if (stato === 'da_confermare') return { esito: 'da_confermare', entro: confermaEntro! };
       if (stato === 'confermato') return { esito: 'confermato' };
-      const coda = await leggiCoda(tx, partecipanti);
+      const coda = await leggiCoda(tx, partecipanti, { politica: attivita.politicaCoda, adesso });
       return { esito: 'in_attesa', posizione: coda.findIndex((p) => p.id === uid) + 1 };
     }
 
@@ -60,6 +60,27 @@ export async function iscrivi(
       confermatoIl: confermato ? adesso : null,
       retrocessoIl: null,
     };
+
+    // Con la FIFO chi arriva è ultimo
+    // per le altre politiche la posizione dipende dallo storico
+    const posizione = confermato
+      ? 0
+      : attivita.politicaCoda === 'fifo'
+        ? attivita.inAttesa + 1
+        : (
+            await leggiCoda(tx, partecipanti, {
+              politica: attivita.politicaCoda,
+              adesso,
+              nuovo: {
+                id: uid,
+                ref: partecipanteRif,
+                iscrittoIl: adesso,
+                retrocessoIl: null,
+                versioneAccettata: attivita.versione,
+              },
+            })
+          ).findIndex((p) => p.id === uid) + 1;
+
     const evento: Evento = {
       tipo: 'iscritto',
       utente: uid,
@@ -72,9 +93,8 @@ export async function iscrivi(
 
     // Due ingressi simultanei vanno in conflitto.
     if (!confermato) {
-      const inAttesa = attivita.inAttesa + 1;
-      tx.update(attivitaRif, { inAttesa } satisfies Partial<Attivita>);
-      return { esito: 'in_attesa', posizione: inAttesa };
+      tx.update(attivitaRif, { inAttesa: attivita.inAttesa + 1 } satisfies Partial<Attivita>);
+      return { esito: 'in_attesa', posizione };
     }
 
     const postiOccupati = attivita.postiOccupati + 1;
@@ -118,7 +138,7 @@ export async function esci(
     // Il primo in coda si cerca solo se si libera un posto
     const primo =
       stato !== 'in_attesa' && attivita.inAttesa > 0
-        ? (await leggiCoda(tx, partecipanti))[0]
+        ? (await leggiCoda(tx, partecipanti, { politica: attivita.politicaCoda, adesso, senza: [uid] }))[0]
         : undefined;
 
     // Chi doveva riconfermare teneva il posto

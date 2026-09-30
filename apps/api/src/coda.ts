@@ -3,9 +3,17 @@ import type {
   DocumentReference,
   Transaction,
 } from 'firebase-admin/firestore';
-import type { Partecipante, StatoPartecipante } from 'modello';
+import {
+  COLLEZIONI,
+  type Partecipante,
+  type PoliticaCoda,
+  type Statistiche,
+  type StatoPartecipante,
+} from 'modello';
+import { db } from './firestore.js';
+import { POLITICA, type Contesto } from './politiche.js';
 
-export interface InCoda {
+interface Candidato {
   id: string;
   ref: DocumentReference;
   iscrittoIl: number;
@@ -13,7 +21,13 @@ export interface InCoda {
   versioneAccettata: number;
 }
 
-type Ordinabile = Pick<InCoda, 'id' | 'iscrittoIl' | 'retrocessoIl'>;
+export interface InCoda extends Candidato {
+  punteggio: number;
+  motivo: string;
+}
+
+// con la FIFO decide solo l'ordine d'arrivo
+type Ordinabile = Pick<Candidato, 'id' | 'iscrittoIl' | 'retrocessoIl'> & { punteggio?: number };
 
 // Chi ha perso il posto per una riduzione sta davanti a chi non l'ha mai avuto.
 export function ordineCoda(a: Ordinabile, b: Ordinabile) {
@@ -21,19 +35,51 @@ export function ordineCoda(a: Ordinabile, b: Ordinabile) {
   const retrocessoB = b.retrocessoIl !== null;
   if (retrocessoA !== retrocessoB) return retrocessoA ? -1 : 1;
 
+  // Politica dell'attività: punteggio più alto prima
+  const punteggioA = a.punteggio ?? 0;
+  const punteggioB = b.punteggio ?? 0;
+  if (punteggioA !== punteggioB) return punteggioB - punteggioA;
+
   // Ordine d'arrivo; a parità di istante decide l'uid.
   if (a.iscrittoIl !== b.iscrittoIl) return a.iscrittoIl - b.iscrittoIl;
   return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
 }
 
-// L'intera coda, già ordinata: è il punto in cui le politiche della coda cambieranno l'ordine.
-export async function leggiCoda(tx: Transaction, partecipanti: CollectionReference) {
+interface OpzioniCoda {
+  politica: PoliticaCoda;
+  adesso: number;
+  // Chi perde il posto non conta fra i presenti
+  senza?: string[];
+  nuovo?: Candidato;
+}
+
+// coda ordinata con la politica dell'attività
+// posizioni e promozioni 
+export async function leggiCoda(
+  tx: Transaction,
+  partecipanti: CollectionReference,
+  { politica, adesso, senza = [], nuovo }: OpzioniCoda,
+): Promise<InCoda[]> {
   const snapshot = await tx.get(partecipanti.where('stato', '==', 'in_attesa'));
-  const coda: InCoda[] = snapshot.docs.map((d) => {
+  const candidati: Candidato[] = snapshot.docs.map((d) => {
     const { iscrittoIl, retrocessoIl, versioneAccettata } = d.data() as Partecipante;
     return { id: d.id, ref: d.ref, iscrittoIl, retrocessoIl, versioneAccettata };
   });
-  return coda.sort(ordineCoda);
+  if (nuovo) candidati.push(nuovo);
+
+  // Con FIFO lo storico non serve
+  const contesto: Contesto = { presenti: [], statistiche: new Map(), adesso };
+  if (politica !== 'fifo' && candidati.length > 0) {
+    if (politica === 'affinita' || politica === 'esplorazione') {
+      const posti = await tx.get(partecipanti.where('stato', 'in', ['confermato', 'da_confermare']));
+      contesto.presenti = posti.docs.map((d) => d.id).filter((id) => !senza.includes(id));
+    }
+    const statistiche = db.collection(COLLEZIONI.statistiche);
+    const documenti = await tx.getAll(...candidati.map((c) => statistiche.doc(c.id)));
+    for (const d of documenti) if (d.exists) contesto.statistiche.set(d.id, d.data() as Statistiche);
+  }
+
+  return candidati.map((c) => ({ ...c, ...POLITICA[politica](c.id, contesto) })).sort(ordineCoda);
 }
 
 export interface InPosto {

@@ -75,7 +75,13 @@ export async function applicaScadenze(idAttivita: string, orologio: () => number
     const cominciata = attivita.inizio <= adesso;
     const promossi =
       !cominciata && attivita.inAttesa > 0
-        ? (await leggiCoda(tx, rif.partecipanti)).slice(0, scaduti.length)
+        ? (
+            await leggiCoda(tx, rif.partecipanti, {
+              politica: attivita.politicaCoda,
+              adesso,
+              senza: scaduti.map((d) => d.id),
+            })
+          ).slice(0, scaduti.length)
         : [];
 
     for (const d of scaduti) {
