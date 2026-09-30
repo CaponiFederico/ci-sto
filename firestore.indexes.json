@@ -1,13 +1,4 @@
 {
-  "indexes": [
-    {
-      "collectionGroup": "partecipanti",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "stato", "order": "ASCENDING" },
-        { "fieldPath": "iscrittoIl", "order": "ASCENDING" }
-      ]
-    }
-  ],
+  "indexes": [],
   "fieldOverrides": []
 }

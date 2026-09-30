@@ -55,7 +55,6 @@ export async function iscrivi(
     const partecipante: Partecipante = {
       stato: confermato ? 'confermato' : 'in_attesa',
       iscrittoIl: adesso,
-      punteggio: 0,
       versioneAccettata: attivita.versione,
       confermaEntro: null,
       confermatoIl: confermato ? adesso : null,

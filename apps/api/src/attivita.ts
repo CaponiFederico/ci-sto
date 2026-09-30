@@ -121,12 +121,12 @@ export async function creaAttivita(organizzatore: string, nuova: NuovaAttivita, 
     versioneMaggiore: 1,
     creataIl: adesso,
     modificataIl: adesso,
+    consolidataIl: null,
   };
   // L'organizzatore partecipa
   const iscrizione: Partecipante = {
     stato: 'confermato',
     iscrittoIl: adesso,
-    punteggio: 0,
     versioneAccettata: 1,
     confermaEntro: null,
     confermatoIl: adesso,

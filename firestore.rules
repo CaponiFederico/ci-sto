@@ -34,11 +34,6 @@ service cloud.firestore {
     match /statistiche/{uid} {
       allow read: if proprietario(uid);
       allow write: if false;
-
-      match /coPartecipanti/{altro} {
-        allow read: if proprietario(uid);
-        allow write: if false;
-      }
     }
 
     match /sottoscrizioni/{uid}/dispositivi/{dispositivo} {

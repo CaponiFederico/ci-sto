@@ -8,7 +8,6 @@ export const COLLEZIONI = {
 export const SOTTOCOLLEZIONI = {
   partecipanti: 'partecipanti',
   eventi: 'eventi',
-  coPartecipanti: 'coPartecipanti',
   dispositivi: 'dispositivi',
 } as const;
 
@@ -65,6 +64,7 @@ export interface Attivita {
   versioneMaggiore: number;
   creataIl: number;
   modificataIl: number;
+  consolidataIl: number | null;
 }
 
 export interface NuovaAttivita {
@@ -81,7 +81,6 @@ export interface NuovaAttivita {
 export interface Partecipante {
   stato: StatoPartecipante;
   iscrittoIl: number;
-  punteggio: number;
   versioneAccettata: number;
   confermaEntro: number | null;
   confermatoIl: number | null;
@@ -165,11 +164,8 @@ export interface Statistiche {
   escluso: number;
   perCategoria: Partial<Record<Categoria, number>>;
   perLuogo: Record<string, number>;
-}
-
-export interface CoPartecipante {
-  conteggio: number;
-  ultimaVolta: number;
+  // Quante volte ha partecipato con ciascun altro utente: una scrittura per persona a consolidamento.
+  coPartecipanti: Record<string, number>;
 }
 
 export interface Sottoscrizione {
