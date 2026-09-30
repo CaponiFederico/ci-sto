@@ -45,6 +45,8 @@ export function ordineCoda(a: Ordinabile, b: Ordinabile) {
   return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
 }
 
+export const RETROCESSO = 'avevi il posto e lo hai perso per una riduzione: passi davanti';
+
 interface OpzioniCoda {
   politica: PoliticaCoda;
   adesso: number;
@@ -79,7 +81,13 @@ export async function leggiCoda(
     for (const d of documenti) if (d.exists) contesto.statistiche.set(d.id, d.data() as Statistiche);
   }
 
-  return candidati.map((c) => ({ ...c, ...POLITICA[politica](c.id, contesto) })).sort(ordineCoda);
+  return candidati
+    .map((c) => {
+      const valutazione = POLITICA[politica](c.id, contesto);
+      // Chi è retrocesso ha priorità
+      return c.retrocessoIl === null ? { ...c, ...valutazione } : { ...c, ...valutazione, motivo: RETROCESSO };
+    })
+    .sort(ordineCoda);
 }
 
 export interface InPosto {

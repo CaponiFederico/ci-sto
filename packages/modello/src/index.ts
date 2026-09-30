@@ -91,7 +91,7 @@ export type MotivoRifiuto = 'inesistente' | 'annullata' | 'iniziata';
 
 export type EsitoIscrizione =
   | { esito: 'confermato' }
-  | { esito: 'in_attesa'; posizione: number }
+  | { esito: 'in_attesa'; posizione: number; motivo: string }
   | { esito: 'da_confermare'; entro: number }
   | { esito: 'rifiutato'; motivo: MotivoRifiuto };
 

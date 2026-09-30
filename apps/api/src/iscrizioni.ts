@@ -9,8 +9,11 @@ import {
   type Partecipante,
 } from 'modello';
 import { leggiCoda } from './coda.js';
+import { POLITICA, type Contesto } from './politiche.js';
 import { db, ID_ATTIVITA, TENTATIVI } from './firestore.js';
 import { promuovi, applicaScadenze } from './riconferme.js';
+
+const VUOTO: Contesto = { presenti: [], statistiche: new Map(), adesso: 0 };
 
 function rifiutato(motivo: MotivoRifiuto): EsitoIscrizione {
   return { esito: 'rifiutato', motivo };
@@ -46,7 +49,8 @@ export async function iscrivi(
       if (stato === 'da_confermare') return { esito: 'da_confermare', entro: confermaEntro! };
       if (stato === 'confermato') return { esito: 'confermato' };
       const coda = await leggiCoda(tx, partecipanti, { politica: attivita.politicaCoda, adesso });
-      return { esito: 'in_attesa', posizione: coda.findIndex((p) => p.id === uid) + 1 };
+      const indice = coda.findIndex((p) => p.id === uid);
+      return { esito: 'in_attesa', posizione: indice + 1, motivo: coda[indice]!.motivo };
     }
 
     if (attivita.inizio <= adesso) return rifiutato('iniziata');
@@ -63,23 +67,24 @@ export async function iscrivi(
 
     // Con la FIFO chi arriva è ultimo
     // per le altre politiche la posizione dipende dallo storico
-    const posizione = confermato
-      ? 0
-      : attivita.politicaCoda === 'fifo'
-        ? attivita.inAttesa + 1
-        : (
-            await leggiCoda(tx, partecipanti, {
-              politica: attivita.politicaCoda,
-              adesso,
-              nuovo: {
-                id: uid,
-                ref: partecipanteRif,
-                iscrittoIl: adesso,
-                retrocessoIl: null,
-                versioneAccettata: attivita.versione,
-              },
-            })
-          ).findIndex((p) => p.id === uid) + 1;
+    let inCoda = { posizione: 0, motivo: '' };
+    if (!confermato && attivita.politicaCoda === 'fifo') {
+      inCoda = { posizione: attivita.inAttesa + 1, motivo: POLITICA.fifo(uid, VUOTO).motivo };
+    } else if (!confermato) {
+      const coda = await leggiCoda(tx, partecipanti, {
+        politica: attivita.politicaCoda,
+        adesso,
+        nuovo: {
+          id: uid,
+          ref: partecipanteRif,
+          iscrittoIl: adesso,
+          retrocessoIl: null,
+          versioneAccettata: attivita.versione,
+        },
+      });
+      const indice = coda.findIndex((p) => p.id === uid);
+      inCoda = { posizione: indice + 1, motivo: coda[indice]!.motivo };
+    }
 
     const evento: Evento = {
       tipo: 'iscritto',
@@ -94,7 +99,7 @@ export async function iscrivi(
     // Due ingressi simultanei vanno in conflitto.
     if (!confermato) {
       tx.update(attivitaRif, { inAttesa: attivita.inAttesa + 1 } satisfies Partial<Attivita>);
-      return { esito: 'in_attesa', posizione };
+      return { esito: 'in_attesa', ...inCoda };
     }
 
     const postiOccupati = attivita.postiOccupati + 1;
