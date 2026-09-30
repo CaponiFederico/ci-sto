@@ -69,16 +69,16 @@ Interfaccia su `http://127.0.0.1:4000`, Authentication su 9099, Firestore su 808
 
 ## Test
 
-Security Rules, logica di iscrizione e rotte dell'API sono verificate sugli emulatori.
+Security Rules, iscrizioni, modifiche delle attività e rotte dell'API sono verificate sugli
+emulatori.
 
 ```bash
 npm test
 ```
 
-Il comando avvia gli emulatori di Auth e Firestore, esegue i test e li spegne. Il test delle
-iscrizioni simultanee gira 3 volte
-
-Per la verifica completa, 20 giri (qualche minuto):
+Il comando avvia gli emulatori di Auth e Firestore, esegue i test e li spegne. I test delle
+operazioni simultanee girano 3 volte ciascuno; per la verifica completa, 20 giri (circa dieci
+minuti):
 
 ```bash
 npm run test:concorrenza

@@ -71,8 +71,12 @@ export async function applicaScadenze(idAttivita: string, orologio: () => number
     const scaduti = pendenti.docs.filter((d) => (d.get('confermaEntro') as number) <= adesso);
     if (scaduti.length === 0) return nessuno;
 
+    // Ad attività cominciata chi è in coda non fa in tempo
+    const cominciata = attivita.inizio <= adesso;
     const promossi =
-      attivita.inAttesa > 0 ? (await leggiCoda(tx, rif.partecipanti)).slice(0, scaduti.length) : [];
+      !cominciata && attivita.inAttesa > 0
+        ? (await leggiCoda(tx, rif.partecipanti)).slice(0, scaduti.length)
+        : [];
 
     for (const d of scaduti) {
       tx.delete(d.ref);
