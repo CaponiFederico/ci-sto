@@ -3,6 +3,7 @@ import {
   SOTTOCOLLEZIONI,
   type Attivita,
   type EntitaModifica,
+  type EsitoAnnullamento,
   type EsitoModifica,
   type Luogo,
   type Evento,
@@ -75,6 +76,8 @@ export async function modificaAttivita(
       c === 'luogo' ? !stessoLuogo(modifica.luogo!, attivita.luogo) : modifica[c] !== attivita[c],
     );
     if (campi.length === 0) return { esito: 'invariata', versione: attivita.versione };
+
+    if (campi.includes('politicaCoda') && attivita.inAttesa > 0) return rifiutato('coda_non_vuota');
 
     const capacita = modifica.capacita ?? attivita.capacita;
     const eccesso = Math.max(0, attivita.postiOccupati - capacita);
@@ -157,5 +160,42 @@ export async function modificaAttivita(
       retrocessi: retrocessi.map((p) => p.id),
       daConfermare: [...(maggiore ? restano : []), ...promossiDaConfermare].map((p) => p.id),
     };
+  }, { maxAttempts: TENTATIVI });
+}
+
+export async function annullaAttivita(
+  idAttivita: string,
+  uid: string,
+  orologio: () => number = Date.now,
+): Promise<EsitoAnnullamento> {
+  if (!ID_ATTIVITA.test(idAttivita)) return { esito: 'rifiutato', motivo: 'inesistente' };
+  const attivitaRif = db.collection(COLLEZIONI.attivita).doc(idAttivita);
+  const partecipanti = attivitaRif.collection(SOTTOCOLLEZIONI.partecipanti);
+
+  return db.runTransaction(async (tx): Promise<EsitoAnnullamento> => {
+    const adesso = orologio();
+
+    const attivitaDoc = await tx.get(attivitaRif);
+    if (!attivitaDoc.exists) return { esito: 'rifiutato', motivo: 'inesistente' };
+    const attivita = attivitaDoc.data() as Attivita;
+
+    if (attivita.organizzatore !== uid) return { esito: 'rifiutato', motivo: 'non_organizzatore' };
+    // Annullamento ripetuto: nessuno da avvisare di nuovo.
+    if (attivita.stato === 'annullata') return { esito: 'annullata', avvisare: [] };
+    if (attivita.inizio <= adesso) return { esito: 'rifiutato', motivo: 'iniziata' };
+
+    // I partecipanti restano dove sono per sapere chi avvisare 
+    const iscritti = await tx.get(partecipanti);
+    const versione = attivita.versione + 1;
+
+    tx.update(attivitaRif, { stato: 'annullata', versione, modificataIl: adesso } satisfies Partial<Attivita>);
+    tx.set(attivitaRif.collection(SOTTOCOLLEZIONI.eventi).doc(), {
+      tipo: 'annullata',
+      utente: uid,
+      quando: adesso,
+      versione,
+    } satisfies Evento);
+
+    return { esito: 'annullata', avvisare: iscritti.docs.map((d) => d.id).filter((id) => id !== uid) };
   }, { maxAttempts: TENTATIVI });
 }

@@ -93,6 +93,7 @@ export const CAMPI_MODIFICABILI = [
   'inizio',
   'durataMinuti',
   'luogo',
+  'politicaCoda',
 ] as const;
 
 export type Modifica = Partial<Pick<NuovaAttivita, (typeof CAMPI_MODIFICABILI)[number]>>;

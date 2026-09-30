@@ -112,7 +112,18 @@ export type EsitoRiconferma =
 // Minore: gli iscritti restano; maggiore: devono riconfermare.
 export type EntitaModifica = 'minore' | 'maggiore';
 
-export type MotivoRifiutoModifica = 'inesistente' | 'non_organizzatore' | 'annullata' | 'iniziata';
+export type MotivoRifiutoModifica =
+  | 'inesistente'
+  | 'non_organizzatore'
+  | 'annullata'
+  | 'iniziata'
+  | 'coda_non_vuota';
+
+export type MotivoRifiutoAnnullamento = 'inesistente' | 'non_organizzatore' | 'iniziata';
+
+export type EsitoAnnullamento =
+  | { esito: 'annullata'; avvisare: string[] }
+  | { esito: 'rifiutato'; motivo: MotivoRifiutoAnnullamento };
 
 export type EsitoModifica =
   | {
