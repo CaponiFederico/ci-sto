@@ -48,8 +48,8 @@ const esplorazione: Politica = (uid, contesto) => {
     punteggio: -n,
     motivo:
       n === 0
-        ? "non hai ancora partecipato con chi c'è"
-        : `hai già partecipato ${volte(n)} con chi c'è: passa prima chi conosce meno il gruppo`,
+        ? "non hai ancora partecipato con chi è presente nell'attività"
+        : `hai già partecipato ${volte(n)} con chi è presente nell'attività: passa prima chi conosce meno il gruppo`,
   };
 };
 
