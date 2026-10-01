@@ -3,6 +3,10 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { ErroreApi } from './api';
 import { accediConGoogle, accediConPassword, apriSessione, esci } from './auth';
 import { auth } from './firebase';
+import { Dettaglio } from './pagine/Dettaglio';
+import { Elenco } from './pagine/Elenco';
+import { Modulo } from './pagine/Modulo';
+import { rotta, usePercorso } from './percorso';
 
 function messaggio(errore: unknown) {
   if (errore instanceof ErroreApi) {
@@ -34,6 +38,28 @@ function messaggio(errore: unknown) {
     return 'Troppi tentativi. Riprova fra qualche minuto.';
   }
   return 'Accesso non riuscito. Riprova.';
+}
+
+// L'indirizzo decide la pagina
+function Pagina() {
+  const r = rotta(usePercorso());
+
+  switch (r.pagina) {
+    case 'elenco':
+      return <Elenco />;
+    case 'nuova':
+      return <Modulo />;
+    case 'dettaglio':
+      return <Dettaglio id={r.id} />;
+    case 'modifica':
+      return <Modulo id={r.id} />;
+    case 'sconosciuta':
+      return (
+        <p className="vuoto">
+          Pagina non trovata. <a href="#/">Torna alla bacheca</a>
+        </p>
+      );
+  }
 }
 
 function App() {
@@ -88,7 +114,9 @@ function App() {
   return (
     <>
       <header>
-        <h1>Bacheca</h1>
+        <h1>
+          <a href="#/">Bacheca</a>
+        </h1>
         <p className="sottotitolo">Attività fra studenti</p>
 
         <div className="sessione">
@@ -145,7 +173,13 @@ function App() {
       </header>
 
       <main>
-        <p className="vuoto">Nessuna attività pubblicata.</p>
+        {utente ? (
+          <Pagina />
+        ) : (
+          sessioneVerificata && (
+            <p className="vuoto">Accedi con l’account di ateneo per vedere la bacheca.</p>
+          )
+        )}
       </main>
     </>
   );
