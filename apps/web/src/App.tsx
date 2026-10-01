@@ -7,6 +7,7 @@ import { Dettaglio } from './pagine/Dettaglio';
 import { Elenco } from './pagine/Elenco';
 import { Modulo } from './pagine/Modulo';
 import { rotta, usePercorso } from './percorso';
+import { ContestoUtente } from './sessione';
 
 function messaggio(errore: unknown) {
   if (errore instanceof ErroreApi) {
@@ -174,7 +175,9 @@ function App() {
 
       <main>
         {utente ? (
-          <Pagina />
+          <ContestoUtente value={utente}>
+            <Pagina />
+          </ContestoUtente>
         ) : (
           sessioneVerificata && (
             <p className="vuoto">Accedi con l’account di ateneo per vedere la bacheca.</p>

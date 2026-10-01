@@ -160,6 +160,59 @@ button:disabled {
   text-decoration: none;
 }
 
+.elenco {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scheda {
+  padding: 0.9rem 1rem;
+  background: var(--superficie);
+  border: 1px solid var(--bordo);
+  border-radius: 0.5rem;
+}
+
+.scheda h3 {
+  margin: 0.4rem 0 0.2rem;
+  font-size: 1.1rem;
+}
+
+.scheda p {
+  margin: 0;
+}
+
+.scheda.annullata {
+  opacity: 0.6;
+}
+
+.etichette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.etichetta {
+  padding: 0.1rem 0.5rem;
+  font-size: 0.75rem;
+  color: var(--testo-tenue);
+  border: 1px solid var(--bordo);
+  border-radius: 1rem;
+}
+
+.dettagli {
+  font-size: 0.875rem;
+  color: var(--testo-tenue);
+}
+
+.posti {
+  margin-top: 0.4rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
 .vuoto {
   color: var(--testo-tenue);
   background: var(--superficie);
