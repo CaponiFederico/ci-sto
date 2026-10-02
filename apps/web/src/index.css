@@ -265,6 +265,21 @@ legend {
   font-weight: 600;
 }
 
+.stato {
+  display: grid;
+  justify-items: start;
+  gap: 0.5rem;
+  margin: 1.25rem 0 0;
+  padding: 0.9rem 1rem;
+  background: var(--superficie);
+  border: 1px solid var(--bordo);
+  border-radius: 0.5rem;
+}
+
+.stato p {
+  margin: 0;
+}
+
 .ritorno {
   margin: 0 0 1rem;
   font-size: 0.875rem;

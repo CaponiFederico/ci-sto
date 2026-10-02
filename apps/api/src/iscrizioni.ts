@@ -7,6 +7,7 @@ import {
   type Evento,
   type MotivoRifiuto,
   type Partecipante,
+  type StatoIscrizione,
 } from 'modello';
 import { leggiCoda } from './coda.js';
 import { POLITICA, type Contesto } from './politiche.js';
@@ -110,6 +111,32 @@ export async function iscrivi(
 
     return { esito: 'confermato' };
   }, { maxAttempts: TENTATIVI });
+}
+
+// Sola lettura
+export async function statoIscrizione(
+  idAttivita: string,
+  uid: string,
+  orologio: () => number = Date.now,
+): Promise<StatoIscrizione> {
+  if (!ID_ATTIVITA.test(idAttivita)) return { stato: 'non_iscritto' };
+  const attivitaRif = db.collection(COLLEZIONI.attivita).doc(idAttivita);
+  const partecipanti = attivitaRif.collection(SOTTOCOLLEZIONI.partecipanti);
+
+  return db.runTransaction(async (tx) => {
+    const attivitaDoc = await tx.get(attivitaRif);
+    const partecipanteDoc = await tx.get(partecipanti.doc(uid));
+    if (!attivitaDoc.exists || !partecipanteDoc.exists) return { stato: 'non_iscritto' };
+
+    const { politicaCoda } = attivitaDoc.data() as Attivita;
+    const { stato, confermaEntro } = partecipanteDoc.data() as Partecipante;
+    if (stato === 'confermato') return { stato };
+    if (stato === 'da_confermare') return { stato, entro: confermaEntro! };
+
+    const coda = await leggiCoda(tx, partecipanti, { politica: politicaCoda, adesso: orologio() });
+    const indice = coda.findIndex((p) => p.id === uid);
+    return { stato, posizione: indice + 1, motivo: coda[indice]!.motivo };
+  }, { readOnly: true });
 }
 
 export async function esci(

@@ -5,9 +5,11 @@ import {
   type Attivita,
   type Evento,
   type Partecipante,
+  type StatoIscrizione,
   type Utente,
 } from 'modello';
 import { useEffect, useState } from 'react';
+import { statoIscrizione } from './azioni';
 import { db } from './firebase';
 
 // L'id non è nei dati del documento
@@ -81,6 +83,30 @@ export function usePartecipanti(id: string) {
   }, [id]);
 
   return partecipanti;
+}
+
+// Il proprio stato lo dice l'API. Si richiede a ogni cambiamento dell'attività.
+export function useMioStato(attivita: AttivitaConId) {
+  const [stato, setStato] = useState<StatoIscrizione | null>(null);
+  const [errore, setErrore] = useState(false);
+
+  useEffect(() => {
+    let attuale = true;
+    statoIscrizione(attivita.id)
+      .then((letto) => {
+        if (!attuale) return;
+        setStato(letto);
+        setErrore(false);
+      })
+      .catch(() => attuale && setErrore(true));
+
+    // Una risposta arrivata tardi non deve sovrascrivere quella più recente
+    return () => {
+      attuale = false;
+    };
+  }, [attivita]);
+
+  return { stato, errore };
 }
 
 export function useCronologia(id: string) {

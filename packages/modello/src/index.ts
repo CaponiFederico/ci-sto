@@ -101,6 +101,13 @@ export type EsitoIscrizione =
   | { esito: 'da_confermare'; entro: number }
   | { esito: 'rifiutato'; motivo: MotivoRifiuto };
 
+// Lo stato di chi chiede: posizione e motivo li conosce solo l'API
+export type StatoIscrizione =
+  | { stato: 'non_iscritto' }
+  | { stato: 'confermato' }
+  | { stato: 'in_attesa'; posizione: number; motivo: string }
+  | { stato: 'da_confermare'; entro: number };
+
 export type MotivoRifiutoUscita = 'annullata' | 'iniziata' | 'organizzatore';
 
 export type EsitoUscita =

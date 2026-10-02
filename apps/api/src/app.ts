@@ -3,7 +3,7 @@ import './ambiente.js';
 import cors from 'cors';
 import express from 'express';
 import { creaAttivita, validaModifica, validaNuovaAttivita } from './attivita.js';
-import { esci, iscrivi } from './iscrizioni.js';
+import { esci, iscrivi, statoIscrizione } from './iscrizioni.js';
 import { annullaAttivita, modificaAttivita } from './modifiche.js';
 import { riconferma } from './riconferme.js';
 import {
@@ -93,6 +93,10 @@ app.patch('/v1/attivita/:id', richiediAutenticazione, richiediAteneo, async (req
 // L'esito è la risposta
 app.post('/v1/attivita/:id/iscrizione', richiediAutenticazione, richiediAteneo, async (req, res) => {
   res.json(await iscrivi(req.params.id as string, (req as RichiestaAutenticata).token.uid));
+});
+
+app.get('/v1/attivita/:id/iscrizione', richiediAutenticazione, richiediAteneo, async (req, res) => {
+  res.json(await statoIscrizione(req.params.id as string, (req as RichiestaAutenticata).token.uid));
 });
 
 app.delete('/v1/attivita/:id/iscrizione', richiediAutenticazione, richiediAteneo, async (req, res) => {

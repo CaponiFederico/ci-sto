@@ -5,8 +5,13 @@ import {
   LUNGHEZZA_MASSIMA,
   type Attivita,
   type Categoria,
+  type EsitoIscrizione,
+  type EsitoUscita,
   type Evento,
+  type MotivoRifiuto,
+  type MotivoRifiutoUscita,
   type PoliticaCoda,
+  type StatoIscrizione,
 } from 'modello';
 import type { Campo } from './modulo';
 
@@ -72,4 +77,68 @@ export function posti({ stato, capacita, postiOccupati, inAttesa }: Attivita) {
   const liberi = capacita - postiOccupati;
   if (liberi > 0) return `${liberi} ${liberi === 1 ? 'posto libero' : 'posti liberi'} su ${capacita}`;
   return inAttesa > 0 ? `Posti finiti, ${inAttesa} in lista d’attesa` : 'Posti finiti';
+}
+
+export interface Iscrizione {
+  testo: string;
+  azione: 'iscrivi' | 'lascia';
+  bottone: string;
+}
+
+export function descriviIscrizione(stato: StatoIscrizione, attivita: Attivita, adesso: number): Iscrizione {
+  switch (stato.stato) {
+    case 'non_iscritto':
+      return attivita.postiOccupati < attivita.capacita
+        ? { testo: 'Non sei iscritto.', azione: 'iscrivi', bottone: 'Iscriviti' }
+        : { testo: 'I posti sono finiti: puoi metterti in lista d’attesa.', azione: 'iscrivi', bottone: 'Mettiti in lista' };
+    case 'confermato':
+      return { testo: 'Hai un posto.', azione: 'lascia', bottone: 'Lascia il posto' };
+    case 'in_attesa':
+      return {
+        testo: `Sei in lista d’attesa, in posizione ${stato.posizione}: ${stato.motivo}.`,
+        azione: 'lascia',
+        bottone: 'Esci dalla lista',
+      };
+    case 'da_confermare':
+      return stato.entro <= adesso
+        ? { testo: 'Il termine per riconfermare è passato: il posto non è più tuo.', azione: 'iscrivi', bottone: 'Iscriviti di nuovo' }
+        : {
+            testo: `L’attività è cambiata: il posto resta tuo se lo riconfermi entro ${quando(stato.entro)}.`,
+            azione: 'lascia',
+            bottone: 'Lascia il posto',
+          };
+  }
+}
+
+const RIFIUTO_ISCRIZIONE: Record<MotivoRifiuto, string> = {
+  inesistente: 'Questa attività non esiste più.',
+  annullata: 'L’attività è stata annullata.',
+  iniziata: 'L’attività è già cominciata: le iscrizioni sono chiuse.',
+};
+
+const RIFIUTO_USCITA: Record<MotivoRifiutoUscita, string> = {
+  annullata: 'L’attività è stata annullata.',
+  iniziata: 'L’attività è già cominciata.',
+  organizzatore: 'Chi organizza non può lasciare: può annullare l’attività.',
+};
+
+export function avvisoIscrizione(esito: EsitoIscrizione): string | null {
+  switch (esito.esito) {
+    case 'confermato':
+    case 'in_attesa':
+    case 'da_confermare':
+      return null;
+    case 'rifiutato':
+      return RIFIUTO_ISCRIZIONE[esito.motivo];
+  }
+}
+
+export function avvisoUscita(esito: EsitoUscita): string | null {
+  switch (esito.esito) {
+    case 'uscito':
+    case 'non_iscritto':
+      return null;
+    case 'rifiutato':
+      return RIFIUTO_USCITA[esito.motivo];
+  }
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Iscrizione } from '../componenti/Iscrizione';
 import { Nome } from '../componenti/Nome';
 import { useAttivita, useCronologia, usePartecipanti, type AttivitaConId } from '../dati';
 import { useUtente } from '../sessione';
@@ -92,6 +93,8 @@ function Contenuto({ attivita }: { attivita: AttivitaConId }) {
           {politica.nome}: a posti finiti entra per primo {politica.regola}
         </dd>
       </dl>
+
+      <Iscrizione attivita={attivita} adesso={adesso} />
 
       <section>
         <h3>Chi partecipa</h3>
