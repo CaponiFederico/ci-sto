@@ -1,17 +1,18 @@
 import { useState } from 'react';
 import { Iscrizione } from '../componenti/Iscrizione';
 import { Nome } from '../componenti/Nome';
+import { Salvati } from '../componenti/Salvati';
 import { useAttivita, useCronologia, usePartecipanti, type AttivitaConId } from '../dati';
 import { useUtente } from '../sessione';
 import { CATEGORIA, POLITICA, posti, quando, voceCronologia } from '../testi';
 
 export function Dettaglio({ id }: { id: string }) {
-  const { attivita, errore } = useAttivita(id);
+  const { attivita, errore, daCache } = useAttivita(id);
 
   return (
     <>
       <p className="ritorno">
-        <a href="#/">← Bacheca</a>
+        <a href="#/">← Bacheca</a> {daCache && <Salvati />}
       </p>
 
       {errore ? (

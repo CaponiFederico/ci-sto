@@ -93,9 +93,9 @@ function App() {
           await apriSessione();
           setUtente(u);
         } catch (e) {
-          // Senza rete l'API non può rispondere chi era entrato resta dentro
-          const irraggiungibile = e instanceof ErroreApi && e.codice === 'api_irraggiungibile';
-          if (irraggiungibile && sessioneRicordata(u.uid)) {
+          // Se l'utente non ha più accesso, non mostra l'errore ma esce
+          const rifiutato = e instanceof ErroreApi && (e.stato === 401 || e.stato === 403);
+          if (!rifiutato && sessioneRicordata(u.uid)) {
             setUtente(u);
           } else {
             setErrore(messaggio(e));
@@ -190,7 +190,7 @@ function App() {
 
         {!online && (
           <p className="offline" role="status">
-            Sei offline.
+            Sei offline: vedi i dati salvati su questo dispositivo.
           </p>
         )}
       </header>

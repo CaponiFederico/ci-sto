@@ -1,6 +1,11 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import {
+  getFirestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+} from 'firebase/firestore';
 
 const configurazione = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -18,4 +23,16 @@ for (const [chiave, valore] of Object.entries(configurazione)) {
 
 export const app = initializeApp(configurazione);
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+// Firestore è aperto con cache persistente, anche su più schede
+function apriFirestore() {
+  try {
+    return initializeFirestore(app, {
+      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+    });
+  } catch {
+    // Se la cache non è disponibile (es. in incognito) si apre senza cache
+    return getFirestore(app);
+  }
+}
+
+export const db = apriFirestore();

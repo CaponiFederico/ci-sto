@@ -5,7 +5,6 @@ import {
   type Attivita,
   type Evento,
   type Partecipante,
-  type StatoIscrizione,
   type Utente,
 } from 'modello';
 import { useEffect, useState } from 'react';
@@ -18,10 +17,19 @@ export type AttivitaConId = Attivita & { id: string };
 export type PartecipanteConUid = Partecipante & { uid: string };
 export type EventoConId = Evento & { id: string };
 
+// Il mio stato in un'attività
+// La posizione in lista la sa solo l'API: offline manca
+export type MioStato =
+  | { stato: 'non_iscritto' }
+  | { stato: 'confermato' }
+  | { stato: 'in_attesa'; coda: { posizione: number; motivo: string } | null }
+  | { stato: 'da_confermare'; entro: number };
+
 // attività per data
 export function useElenco() {
   const [attivita, setAttivita] = useState<AttivitaConId[] | null>(null);
   const [errore, setErrore] = useState(false);
+  const [daCache, setDaCache] = useState(false);
 
   const [adesso] = useState(Date.now);
 
@@ -34,17 +42,20 @@ export function useElenco() {
 
     // onSnapshot legge i dati e aggiorna in tempo reale
     // Restituisce una funzione per annullare l'iscrizione
+    // Con includeMetadataChanges arriva un avviso anche quando cambia solo la provenienza dei dati
     return onSnapshot(
       prossime,
+      { includeMetadataChanges: true },
       (risultato) => {
         setAttivita(risultato.docs.map((d) => ({ id: d.id, ...(d.data() as Attivita) })));
+        setDaCache(risultato.metadata.fromCache);
         setErrore(false);
       },
       () => setErrore(true),
     );
   }, [adesso]);
 
-  return { attivita, errore };
+  return { attivita, errore, daCache };
 }
 
 // Il mio stato in ciascuna attività dell'elenco
@@ -74,13 +85,16 @@ export function useMieIscrizioni(ids: string[], uid: string) {
 export function useAttivita(id: string) {
   const [attivita, setAttivita] = useState<AttivitaConId | null | undefined>(undefined);
   const [errore, setErrore] = useState(false);
+  const [daCache, setDaCache] = useState(false);
 
   useEffect(
     () =>
       onSnapshot(
         doc(db, COLLEZIONI.attivita, id),
+        { includeMetadataChanges: true },
         (d) => {
           setAttivita(d.exists() ? { id: d.id, ...(d.data() as Attivita) } : null);
+          setDaCache(d.metadata.fromCache);
           setErrore(false);
         },
         () => setErrore(true),
@@ -88,7 +102,7 @@ export function useAttivita(id: string) {
     [id],
   );
 
-  return { attivita, errore };
+  return { attivita, errore, daCache };
 }
 
 // Chi ha un posto, anche se da confermare
@@ -109,28 +123,55 @@ export function usePartecipanti(id: string) {
   return partecipanti;
 }
 
-// Il proprio stato lo dice l'API. Si richiede a ogni cambiamento dell'attività.
-export function useMioStato(attivita: AttivitaConId) {
-  const [stato, setStato] = useState<StatoIscrizione | null>(null);
+// Legge il mio stato in un'attività, con la posizione in lista se c'è
+export function useMioStato(attivita: AttivitaConId, uid: string) {
+  // undefined finché non arriva, null se non sono iscritto
+  const [mio, setMio] = useState<Partecipante | null | undefined>(undefined);
+  const [coda, setCoda] = useState<{ posizione: number; motivo: string } | null>(null);
   const [errore, setErrore] = useState(false);
 
+  useEffect(
+    () =>
+      onSnapshot(
+        doc(db, COLLEZIONI.attivita, attivita.id, SOTTOCOLLEZIONI.partecipanti, uid),
+        (d) => {
+          setMio(d.exists() ? (d.data() as Partecipante) : null);
+          setErrore(false);
+        },
+        () => setErrore(true),
+      ),
+    [attivita.id, uid],
+  );
+
+  const inLista = mio?.stato === 'in_attesa';
+
+  // La posizione in lista la sa solo l'API: offline manca
   useEffect(() => {
+    if (!inLista) return;
     let attuale = true;
     statoIscrizione(attivita.id)
       .then((letto) => {
         if (!attuale) return;
-        setStato(letto);
-        setErrore(false);
+        setCoda(letto.stato === 'in_attesa' ? { posizione: letto.posizione, motivo: letto.motivo } : null);
       })
-      .catch(() => attuale && setErrore(true));
+    // Senza rete la posizione non si può sapere: resta l'ultima letta, o nessuna
+      .catch(() => {});
 
     // Una risposta arrivata tardi non deve sovrascrivere quella più recente
     return () => {
       attuale = false;
     };
-  }, [attivita]);
+  }, [attivita, inLista]);
 
-  return { stato, errore };
+  return { stato: mioStato(mio, coda), errore };
+}
+
+function mioStato(mio: Partecipante | null | undefined, coda: { posizione: number; motivo: string } | null): MioStato | null {
+  if (mio === undefined) return null;
+  if (mio === null) return { stato: 'non_iscritto' };
+  if (mio.stato === 'confermato') return { stato: 'confermato' };
+  if (mio.stato === 'da_confermare') return { stato: 'da_confermare', entro: mio.confermaEntro! };
+  return { stato: 'in_attesa', coda };
 }
 
 export function useCronologia(id: string) {

@@ -6,7 +6,7 @@ import { avvisoIscrizione, avvisoRiconferma, avvisoUscita, descriviIscrizione } 
 
 export function Iscrizione({ attivita, adesso }: { attivita: AttivitaConId; adesso: number }) {
   const utente = useUtente();
-  const { stato, errore } = useMioStato(attivita);
+  const { stato, errore } = useMioStato(attivita, utente.uid);
 
   // Lo stato di chi chiede: posizione e motivo li conosce solo l'API
   const [avviso, invia, inCorso] = useActionState(async (_prima: string | null, dati: FormData) => {

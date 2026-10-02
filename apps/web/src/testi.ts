@@ -18,9 +18,9 @@ import {
   type MotivoRifiutoRiconferma,
   type MotivoRifiutoUscita,
   type PoliticaCoda,
-  type StatoIscrizione,
   type StatoPartecipante,
 } from 'modello';
+import type { MioStato } from './dati';
 import type { Mostra } from './filtri';
 import type { Campo } from './modulo';
 
@@ -109,7 +109,7 @@ export interface Iscrizione {
   bottoni: { azione: Azione; testo: string }[];
 }
 
-export function descriviIscrizione(stato: StatoIscrizione, attivita: Attivita, adesso: number): Iscrizione {
+export function descriviIscrizione(stato: MioStato, attivita: Attivita, adesso: number): Iscrizione {
   switch (stato.stato) {
     case 'non_iscritto':
       return attivita.postiOccupati < attivita.capacita
@@ -122,7 +122,10 @@ export function descriviIscrizione(stato: StatoIscrizione, attivita: Attivita, a
       return { testo: 'Hai un posto.', bottoni: [{ azione: 'lascia', testo: 'Lascia il posto' }] };
     case 'in_attesa':
       return {
-        testo: `Sei in lista d’attesa, in posizione ${stato.posizione}: ${stato.motivo}.`,
+        // Senza rete posizione e motivo mancano
+        testo: stato.coda
+          ? `Sei in lista d’attesa, in posizione ${stato.coda.posizione}: ${stato.coda.motivo}.`
+          : 'Sei in lista d’attesa.',
         bottoni: [{ azione: 'lascia', testo: 'Esci dalla lista' }],
       };
     case 'da_confermare':

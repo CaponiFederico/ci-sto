@@ -1,4 +1,5 @@
 import { CATEGORIE } from 'modello';
+import { Salvati } from '../componenti/Salvati';
 import { Scheda } from '../componenti/Scheda';
 import { useElenco, useMieIscrizioni } from '../dati';
 import { filtra, FILTRI_INIZIALI, type Filtri } from '../filtri';
@@ -12,7 +13,7 @@ interface Proprieta {
 
 export function Elenco({ filtri, cambiaFiltri }: Proprieta) {
   const utente = useUtente();
-  const { attivita, errore } = useElenco();
+  const { attivita, errore, daCache } = useElenco();
   const stati = useMieIscrizioni(attivita?.map((a) => a.id) ?? [], utente.uid);
 
   const visibili = attivita ? filtra(attivita, filtri, utente.uid, stati) : [];
@@ -21,7 +22,7 @@ export function Elenco({ filtri, cambiaFiltri }: Proprieta) {
   return (
     <>
       <div className="barra">
-        <h2>Attività</h2>
+        <h2>Attività {daCache && <Salvati />}</h2>
         <a className="bottone" href="#/nuova">
           Nuova attività
         </a>
