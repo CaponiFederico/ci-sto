@@ -149,6 +149,7 @@ const RIFIUTO_ISCRIZIONE: Record<MotivoRifiuto, string> = {
   inesistente: 'Questa attività non esiste più.',
   annullata: 'L’attività è stata annullata.',
   iniziata: 'L’attività è già cominciata: le iscrizioni sono chiuse.',
+  attivita_cambiata: 'L’attività è stata modificata mentre la guardavi: controlla orario e luogo, poi riprova.',
 };
 
 const RIFIUTO_USCITA: Record<MotivoRifiutoUscita, string> = {

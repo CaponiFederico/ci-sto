@@ -14,8 +14,12 @@ export function creaAttivita(nuova: NuovaAttivita) {
   return chiamaApi<{ id: string }>('/v1/attivita', { method: 'POST', body: JSON.stringify(nuova) });
 }
 
-export function iscrivi(id: string) {
-  return chiamaApi<EsitoIscrizione>(`/v1/attivita/${id}/iscrizione`, { method: 'POST' });
+// versioneVista: la versione dell'attività che la persona aveva davanti quando ha chiesto di iscriversi
+export function iscrivi(id: string, versioneVista: number) {
+  return chiamaApi<EsitoIscrizione>(`/v1/attivita/${id}/iscrizione`, {
+    method: 'POST',
+    body: JSON.stringify({ versioneVista }),
+  });
 }
 
 export function lascia(id: string) {

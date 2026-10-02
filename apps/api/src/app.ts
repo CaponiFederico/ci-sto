@@ -92,7 +92,11 @@ app.patch('/v1/attivita/:id', richiediAutenticazione, richiediAteneo, async (req
 
 // L'esito è la risposta
 app.post('/v1/attivita/:id/iscrizione', richiediAutenticazione, richiediAteneo, async (req, res) => {
-  res.json(await iscrivi(req.params.id as string, (req as RichiestaAutenticata).token.uid));
+  const vista: unknown = req.body?.versioneVista;
+  const versioneVista = Number.isInteger(vista) ? (vista as number) : undefined;
+
+  const uid = (req as RichiestaAutenticata).token.uid;
+  res.json(await iscrivi(req.params.id as string, uid, Date.now, versioneVista));
 });
 
 app.get('/v1/attivita/:id/iscrizione', richiediAutenticazione, richiediAteneo, async (req, res) => {

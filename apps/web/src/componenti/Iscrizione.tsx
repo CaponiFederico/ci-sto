@@ -12,7 +12,7 @@ export function Iscrizione({ attivita, adesso }: { attivita: AttivitaConId; ades
   const [avviso, invia, inCorso] = useActionState(async (_prima: string | null, dati: FormData) => {
     try {
       const azione = dati.get('azione');
-      if (azione === 'iscrivi') return avvisoIscrizione(await iscrivi(attivita.id));
+      if (azione === 'iscrivi') return avvisoIscrizione(await iscrivi(attivita.id, attivita.versione));
       if (azione === 'riconferma') return avvisoRiconferma(await riconferma(attivita.id));
       return avvisoUscita(await lascia(attivita.id));
     } catch {

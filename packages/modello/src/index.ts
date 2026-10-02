@@ -93,7 +93,8 @@ export interface Partecipante {
   retrocessoIl: number | null;
 }
 
-export type MotivoRifiuto = 'inesistente' | 'annullata' | 'iniziata';
+// attivita_cambiata: chi si iscrive aveva visto l'attività prima di una modifica maggiore
+export type MotivoRifiuto = 'inesistente' | 'annullata' | 'iniziata' | 'attivita_cambiata';
 
 export type EsitoIscrizione =
   | { esito: 'confermato' }

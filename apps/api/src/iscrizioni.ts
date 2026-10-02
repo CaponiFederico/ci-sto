@@ -20,10 +20,12 @@ function rifiutato(motivo: MotivoRifiuto): EsitoIscrizione {
   return { esito: 'rifiutato', motivo };
 }
 
+// versioneVista: la versione dell'attività che la persona aveva davanti quando ha chiesto di iscriversi
 export async function iscrivi(
   idAttivita: string,
   uid: string,
   orologio: () => number = Date.now,
+  versioneVista?: number,
 ): Promise<EsitoIscrizione> {
   if (!ID_ATTIVITA.test(idAttivita)) return rifiutato('inesistente');
   // Un posto non riconfermato in tempo è libero
@@ -55,6 +57,11 @@ export async function iscrivi(
     }
 
     if (attivita.inizio <= adesso) return rifiutato('iniziata');
+
+    // Se la persona ha visto una versione più vecchia dell'attività, non può iscriversi: deve aggiornare la vista
+    if (versioneVista !== undefined && versioneVista < attivita.versioneMaggiore) {
+      return rifiutato('attivita_cambiata');
+    }
 
     const confermato = attivita.postiOccupati < attivita.capacita;
     const partecipante: Partecipante = {
