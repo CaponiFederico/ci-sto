@@ -1,7 +1,7 @@
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { useEffect, useState, type FormEvent } from 'react';
 import { ErroreApi } from './api';
-import { accediConGoogle, accediConPassword, apriSessione, esci } from './auth';
+import { accediConGoogle, accediConPassword, apriSessione, esci, sessioneRicordata } from './auth';
 import { FILTRI_INIZIALI } from './filtri';
 import { auth } from './firebase';
 import { Dettaglio } from './pagine/Dettaglio';
@@ -9,6 +9,7 @@ import { Elenco } from './pagine/Elenco';
 import { Modifica } from './pagine/Modifica';
 import { Nuova } from './pagine/Nuova';
 import { rotta, usePercorso } from './percorso';
+import { useOnline } from './rete';
 import { ContestoUtente } from './sessione';
 
 function messaggio(errore: unknown) {
@@ -39,6 +40,9 @@ function messaggio(errore: unknown) {
   }
   if (codice === 'auth/too-many-requests') {
     return 'Troppi tentativi. Riprova fra qualche minuto.';
+  }
+  if (codice === 'auth/network-request-failed') {
+    return 'Per accedere serve la rete.';
   }
   return 'Accesso non riuscito. Riprova.';
 }
@@ -73,6 +77,7 @@ function App() {
   const [sessioneVerificata, setSessioneVerificata] = useState(false);
   const [accessoInCorso, setAccessoInCorso] = useState(false);
   const [errore, setErrore] = useState<string | null>(null);
+  const online = useOnline();
 
   // Vale sia per l'accesso appena fatto sia per la sessione ripresa al ricaricamento.
   useEffect(
@@ -88,8 +93,14 @@ function App() {
           await apriSessione();
           setUtente(u);
         } catch (e) {
-          setErrore(messaggio(e));
-          await esci();
+          // Senza rete l'API non può rispondere chi era entrato resta dentro
+          const irraggiungibile = e instanceof ErroreApi && e.codice === 'api_irraggiungibile';
+          if (irraggiungibile && sessioneRicordata(u.uid)) {
+            setUtente(u);
+          } else {
+            setErrore(messaggio(e));
+            await esci();
+          }
         } finally {
           setSessioneVerificata(true);
         }
@@ -174,6 +185,12 @@ function App() {
         {errore && (
           <p className="errore" role="alert">
             {errore}
+          </p>
+        )}
+
+        {!online && (
+          <p className="offline" role="status">
+            Sei offline.
           </p>
         )}
       </header>

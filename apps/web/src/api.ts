@@ -20,9 +20,17 @@ export async function chiamaApi<T>(percorso: string, opzioni: RequestInit = {}):
   const utente = auth.currentUser;
   if (!utente) throw new ErroreApi(401, 'non_autenticato');
 
+  // Ottieni il token di accesso dell'utente corrente
+  let token: string;
+  try {
+    token = await utente.getIdToken();
+  } catch {
+    throw new ErroreApi(0, 'api_irraggiungibile');
+  }
+
   const intestazioni = {
     'Content-Type': 'application/json',
-    Authorization: `Bearer ${await utente.getIdToken()}`,
+    Authorization: `Bearer ${token}`,
     ...opzioni.headers,
   };
 

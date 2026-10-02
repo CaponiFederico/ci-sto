@@ -162,6 +162,15 @@ textarea {
   border-radius: 0.25rem;
 }
 
+.offline {
+  margin: 0.75rem 0 0;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--superficie);
+  background: var(--testo-tenue);
+  border-radius: 0.25rem;
+}
+
 .barra {
   display: flex;
   flex-wrap: wrap;
