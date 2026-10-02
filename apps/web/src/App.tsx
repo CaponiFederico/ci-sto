@@ -2,6 +2,7 @@ import { onAuthStateChanged, type User } from 'firebase/auth';
 import { useEffect, useState, type FormEvent } from 'react';
 import { ErroreApi } from './api';
 import { accediConGoogle, accediConPassword, apriSessione, esci } from './auth';
+import { FILTRI_INIZIALI } from './filtri';
 import { auth } from './firebase';
 import { Dettaglio } from './pagine/Dettaglio';
 import { Elenco } from './pagine/Elenco';
@@ -45,10 +46,12 @@ function messaggio(errore: unknown) {
 // L'indirizzo decide la pagina
 function Pagina() {
   const r = rotta(usePercorso());
+  // I filtri arrivano da fuori: restano scelti anche dopo aver aperto un'attività ed essere tornati
+  const [filtri, setFiltri] = useState(FILTRI_INIZIALI);
 
   switch (r.pagina) {
     case 'elenco':
-      return <Elenco />;
+      return <Elenco filtri={filtri} cambiaFiltri={setFiltri} />;
     case 'nuova':
       return <Nuova />;
     case 'dettaglio':

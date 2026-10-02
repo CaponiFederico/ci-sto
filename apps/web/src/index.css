@@ -223,6 +223,20 @@ legend {
   border-left: 3px solid var(--accento);
 }
 
+.filtri {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.filtri label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  color: var(--testo-tenue);
+}
+
 .elenco {
   display: grid;
   gap: 0.75rem;
@@ -263,6 +277,12 @@ legend {
   color: var(--testo-tenue);
   border: 1px solid var(--bordo);
   border-radius: 1rem;
+}
+
+.etichetta.evidenza {
+  color: var(--superficie);
+  background: var(--accento);
+  border-color: var(--accento);
 }
 
 .dettagli {

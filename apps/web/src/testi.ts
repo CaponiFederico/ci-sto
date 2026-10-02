@@ -19,7 +19,9 @@ import {
   type MotivoRifiutoUscita,
   type PoliticaCoda,
   type StatoIscrizione,
+  type StatoPartecipante,
 } from 'modello';
+import type { Mostra } from './filtri';
 import type { Campo } from './modulo';
 
 export const CATEGORIA: Record<Categoria, string> = {
@@ -28,6 +30,19 @@ export const CATEGORIA: Record<Categoria, string> = {
   trasporto: 'Trasporto',
   svago: 'Svago',
   altro: 'Altro',
+};
+
+export const MOSTRA: Record<Mostra, string> = {
+  tutte: 'Tutte',
+  mie: 'A cui partecipo',
+  organizzo: 'Organizzate da me',
+  libere: 'Con posti liberi',
+};
+
+export const MIO_STATO: Record<StatoPartecipante, string> = {
+  confermato: 'Hai un posto',
+  in_attesa: 'Sei in lista d’attesa',
+  da_confermare: 'Da riconfermare',
 };
 
 export const POLITICA: Record<PoliticaCoda, { nome: string; regola: string }> = {

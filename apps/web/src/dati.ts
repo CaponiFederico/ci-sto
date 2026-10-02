@@ -10,6 +10,7 @@ import {
 } from 'modello';
 import { useEffect, useState } from 'react';
 import { statoIscrizione } from './azioni';
+import type { MieiStati } from './filtri';
 import { db } from './firebase';
 
 // L'id non è nei dati del documento
@@ -44,6 +45,29 @@ export function useElenco() {
   }, [adesso]);
 
   return { attivita, errore };
+}
+
+// Il mio stato in ciascuna attività dell'elenco
+export function useMieIscrizioni(ids: string[], uid: string) {
+  const [stati, setStati] = useState<MieiStati>({});
+
+  const chiave = ids.join(',');
+
+  useEffect(() => {
+    const chiusure = chiave
+      .split(',')
+      .filter(Boolean)
+      .map((id) =>
+        onSnapshot(doc(db, COLLEZIONI.attivita, id, SOTTOCOLLEZIONI.partecipanti, uid), (d) => {
+          const stato = d.exists() ? (d.data() as Partecipante).stato : undefined;
+          // Le risposte arrivano una alla volta: ognuna parte dallo stato precedente.
+          setStati((prima) => ({ ...prima, [id]: stato }));
+        }),
+      );
+    return () => chiusure.forEach((chiudi) => chiudi());
+  }, [chiave, uid]);
+
+  return stati;
 }
 
 // Una sola attività: undefined finché non arriva, null se non esiste

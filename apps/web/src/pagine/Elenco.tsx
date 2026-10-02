@@ -1,8 +1,22 @@
+import { CATEGORIE } from 'modello';
 import { Scheda } from '../componenti/Scheda';
-import { useElenco } from '../dati';
+import { useElenco, useMieIscrizioni } from '../dati';
+import { filtra, FILTRI_INIZIALI, type Filtri } from '../filtri';
+import { useUtente } from '../sessione';
+import { CATEGORIA, MOSTRA } from '../testi';
 
-export function Elenco() {
+interface Proprieta {
+  filtri: Filtri;
+  cambiaFiltri: (filtri: Filtri) => void;
+}
+
+export function Elenco({ filtri, cambiaFiltri }: Proprieta) {
+  const utente = useUtente();
   const { attivita, errore } = useElenco();
+  const stati = useMieIscrizioni(attivita?.map((a) => a.id) ?? [], utente.uid);
+
+  const visibili = attivita ? filtra(attivita, filtri, utente.uid, stati) : [];
+  const filtrato = filtri.categoria !== 'tutte' || filtri.mostra !== 'tutte';
 
   return (
     <>
@@ -13,6 +27,37 @@ export function Elenco() {
         </a>
       </div>
 
+      <div className="filtri">
+        <label>
+          Categoria
+          <select
+            value={filtri.categoria}
+            onChange={(e) => cambiaFiltri({ ...filtri, categoria: e.target.value as Filtri['categoria'] })}
+          >
+            <option value="tutte">Tutte</option>
+            {CATEGORIE.map((c) => (
+              <option key={c} value={c}>
+                {CATEGORIA[c]}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          Mostra
+          <select
+            value={filtri.mostra}
+            onChange={(e) => cambiaFiltri({ ...filtri, mostra: e.target.value as Filtri['mostra'] })}
+          >
+            {Object.entries(MOSTRA).map(([valore, etichetta]) => (
+              <option key={valore} value={valore}>
+                {etichetta}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
       {errore ? (
         <p className="errore" role="alert">
           Non è stato possibile leggere la bacheca. Riprova fra poco.
@@ -21,14 +66,28 @@ export function Elenco() {
         <p className="vuoto">Caricamento…</p>
       ) : attivita.length === 0 ? (
         <p className="vuoto">Nessuna attività in programma.</p>
+      ) : visibili.length === 0 ? (
+        <p className="vuoto">
+          Nessuna attività con questi filtri.{' '}
+          <button type="button" className="secondario" onClick={() => cambiaFiltri(FILTRI_INIZIALI)}>
+            Togli i filtri
+          </button>
+        </p>
       ) : (
-        <ul className="elenco">
-          {attivita.map((a) => (
-            <li key={a.id}>
-              <Scheda attivita={a} />
-            </li>
-          ))}
-        </ul>
+        <>
+          {filtrato && (
+            <p className="nota">
+              {visibili.length} su {attivita.length}
+            </p>
+          )}
+          <ul className="elenco">
+            {visibili.map((a) => (
+              <li key={a.id}>
+                <Scheda attivita={a} mioStato={stati[a.id]} />
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </>
   );
