@@ -114,15 +114,54 @@ npm run deploy:regole
 
 ```text
 apps/
-  web/                   Vite + React + TypeScript
-    src/sw.ts            service worker: precaching, fallback offline
-    src/pwa.ts           registrazione del service worker
-    public/offline.html  pagina di fallback offline
-  api/                   Express: REST, proxy verso i servizi esterni
-firebase.json            hosting, regole Firestore, emulatori
-firestore.rules          SEGNAPOSTO: nega tutto finché non ci sono le regole vere
-firestore.indexes.json   indici composti, vuoto finché non servono
+  web/                    Vite + React + TypeScript
+    src/App.tsx           accesso e scelta della pagina
+    src/percorso.ts       navigazione: l'indirizzo dopo # decide la pagina
+    src/pagine/           elenco, nuova attività, dettaglio, modifica
+    src/componenti/       scheda, campi del modulo, iscrizione, conferma, nome
+    src/dati.ts           letture da Firestore in tempo reale
+    src/azioni.ts         scritture, sempre tramite l'API
+    src/testi.ts          messaggi per ogni stato ed esito
+    src/sw.ts             service worker: precaching, fallback offline
+    public/offline.html   pagina di fallback offline
+  api/                    Express
+    src/app.ts            rotte
+    src/iscrizioni.ts     iscrizione e uscita, in transazione
+    src/modifiche.ts      modifica e annullamento di un'attività con iscritti
+    src/riconferme.ts     riconferma dopo una modifica maggiore, scadenze
+    src/coda.ts           ordine della lista d'attesa
+    src/politiche.ts      le cinque politiche della lista d'attesa
+    src/storico.ts        storico delle partecipazioni
+packages/
+  modello/                tipi, costanti e regole condivise da web e api
+firebase.json             hosting, regole Firestore, emulatori
+firestore.rules           regole di sicurezza: i client leggono, solo l'API scrive
+firestore.indexes.json    indici composti, vuoto finché non servono
 ```
+
+## Come funziona
+
+Il browser legge da Firestore in tempo reale. Se qualcuno si iscrive, i posti cambiano.
+Ogni scrittura passa dall'API, che decide in una transazione chi
+ha il posto e chi va in lista d'attesa.
+
+| Indirizzo | Pagina |
+|---|---|
+| `/#/` | elenco delle attività in programma, con filtri |
+| `/#/nuova` | pubblicazione di un'attività |
+| `/#/attivita/<id>` | dettaglio: iscrizione, uscita, posizione in lista d'attesa, riconferma |
+| `/#/attivita/<id>/modifica` | modifica e annullamento, solo per chi organizza |
+
+## Account di prova
+
+Per provare la lista d'attesa servono più persone. Gli indirizzi in `TEST_USER_EMAIL` (separati da
+virgola, elencati anche in `ALLOWED_EMAILS`) diventano account con la password `TEST_USER_PASSWORD`:
+
+```bash
+npm run utente:test
+```
+
+Si entra con «Accedi con email e password», una finestra del browser per account.
 
 ## Credenziali di prova
 

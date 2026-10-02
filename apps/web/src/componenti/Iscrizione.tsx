@@ -39,7 +39,7 @@ export function Iscrizione({ attivita, adesso }: { attivita: AttivitaConId; ades
 
   return (
     <form className="stato" action={invia}>
-      <p>{testo}</p>
+      <p role="status">{testo}</p>
       <div className="bottoni">
         {bottoni.map((b, i) => (
           <button

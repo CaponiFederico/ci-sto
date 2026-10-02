@@ -22,12 +22,13 @@ interface Proprieta {
 export function Campi({ valori, errori, politicaBloccata = false }: Proprieta) {
   const errore = (campo: Campo) =>
     errori.includes(campo) && <span className="errore-campo">{ERRORE_CAMPO[campo]}</span>;
+  const sbagliato = (campo: Campo) => errori.includes(campo) || undefined;
 
   return (
     <>
       <label>
         Titolo
-        <input name="titolo" defaultValue={valori.titolo} required maxLength={LUNGHEZZA_MASSIMA.titolo} />
+        <input name="titolo" aria-invalid={sbagliato('titolo')} defaultValue={valori.titolo} required maxLength={LUNGHEZZA_MASSIMA.titolo} />
         {errore('titolo')}
       </label>
 
@@ -35,6 +36,7 @@ export function Campi({ valori, errori, politicaBloccata = false }: Proprieta) {
         Descrizione
         <textarea
           name="descrizione"
+          aria-invalid={sbagliato('descrizione')}
           defaultValue={valori.descrizione}
           rows={3}
           maxLength={LUNGHEZZA_MASSIMA.descrizione}
@@ -57,7 +59,7 @@ export function Campi({ valori, errori, politicaBloccata = false }: Proprieta) {
       <div className="affiancati">
         <label>
           Inizio
-          <input type="datetime-local" name="inizio" defaultValue={valori.inizio} required />
+          <input type="datetime-local" name="inizio" aria-invalid={sbagliato('inizio')} defaultValue={valori.inizio} required />
           {errore('inizio')}
         </label>
 
@@ -66,6 +68,7 @@ export function Campi({ valori, errori, politicaBloccata = false }: Proprieta) {
           <input
             type="number"
             name="durataMinuti"
+          aria-invalid={sbagliato('durataMinuti')}
             defaultValue={valori.durataMinuti}
             required
             min={DURATA_MINIMA}
@@ -77,7 +80,7 @@ export function Campi({ valori, errori, politicaBloccata = false }: Proprieta) {
 
       <label>
         Luogo
-        <input name="luogo" defaultValue={valori.luogo} required maxLength={LUNGHEZZA_MASSIMA.luogo} />
+        <input name="luogo" aria-invalid={sbagliato('luogo')} defaultValue={valori.luogo} required maxLength={LUNGHEZZA_MASSIMA.luogo} />
         {errore('luogo')}
       </label>
 
@@ -86,6 +89,7 @@ export function Campi({ valori, errori, politicaBloccata = false }: Proprieta) {
         <input
           type="number"
           name="capacita"
+          aria-invalid={sbagliato('capacita')}
           defaultValue={valori.capacita}
           required
           min={CAPACITA_MINIMA}
