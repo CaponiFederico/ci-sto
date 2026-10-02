@@ -52,7 +52,8 @@ function Pagina() {
     case 'nuova':
       return <Nuova />;
     case 'dettaglio':
-      return <Dettaglio id={r.id} />;
+      // Dettaglio è un componente a parte: gli hook partono solo quando l'attività c'è
+      return <Dettaglio key={r.id} id={r.id} />;
     case 'modifica':
       return <Modifica id={r.id} />;
     case 'sconosciuta':

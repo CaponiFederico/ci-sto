@@ -265,6 +265,40 @@ legend {
   font-weight: 600;
 }
 
+.ritorno {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+}
+
+.dettaglio h3 {
+  margin: 1.5rem 0 0.5rem;
+  font-size: 1rem;
+}
+
+.dettaglio ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.descrizione {
+  white-space: pre-line;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.4rem 1rem;
+  margin: 1rem 0 0;
+}
+
+dt {
+  color: var(--testo-tenue);
+}
+
+dd {
+  margin: 0;
+}
+
 .vuoto {
   color: var(--testo-tenue);
   background: var(--superficie);

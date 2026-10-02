@@ -1,6 +1,7 @@
 import type { AttivitaConId } from '../dati';
 import { useUtente } from '../sessione';
 import { CATEGORIA, posti, quando } from '../testi';
+import { Nome } from './Nome';
 
 export function Scheda({ attivita }: { attivita: AttivitaConId }) {
   const utente = useUtente();
@@ -23,6 +24,8 @@ export function Scheda({ attivita }: { attivita: AttivitaConId }) {
         {attivita.durataMinuti} min
         {' · '}
         {attivita.luogo.testo}
+        {' · '}
+        <Nome uid={attivita.organizzatore} />
       </p>
 
       <p className="posti">{posti(attivita)}</p>

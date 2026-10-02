@@ -5,6 +5,7 @@ import {
   LUNGHEZZA_MASSIMA,
   type Attivita,
   type Categoria,
+  type Evento,
   type PoliticaCoda,
 } from 'modello';
 import type { Campo } from './modulo';
@@ -35,6 +36,25 @@ export const ERRORE_CAMPO: Record<Campo, string> = {
   capacita: `I posti vanno da ${CAPACITA_MINIMA} a ${CAPACITA_MASSIMA}, te compreso.`,
   politicaCoda: 'Scegli come funziona la lista d’attesa.',
 };
+
+const NOME_CAMPO: Record<Campo, string> = {
+  titolo: 'titolo',
+  descrizione: 'descrizione',
+  categoria: 'categoria',
+  inizio: 'inizio',
+  durataMinuti: 'durata',
+  luogo: 'luogo',
+  capacita: 'posti',
+  politicaCoda: 'lista d’attesa',
+};
+
+export function voceCronologia({ tipo, campiModificati = [], entita }: Evento) {
+  if (tipo === 'creata') return 'Pubblicata';
+  if (tipo === 'annullata') return 'Annullata';
+
+  const campi = campiModificati.map((c) => NOME_CAMPO[c as Campo] ?? c).join(', ');
+  return entita === 'maggiore' ? `Modificata: ${campi}. Chi era iscritto deve riconfermare` : `Modificata: ${campi}`;
+}
 
 export function quando(istante: number) {
   return new Date(istante).toLocaleString('it-IT', {
