@@ -5,7 +5,8 @@ import { accediConGoogle, accediConPassword, apriSessione, esci } from './auth';
 import { auth } from './firebase';
 import { Dettaglio } from './pagine/Dettaglio';
 import { Elenco } from './pagine/Elenco';
-import { Modulo } from './pagine/Modulo';
+import { Modifica } from './pagine/Modifica';
+import { Nuova } from './pagine/Nuova';
 import { rotta, usePercorso } from './percorso';
 import { ContestoUtente } from './sessione';
 
@@ -49,11 +50,11 @@ function Pagina() {
     case 'elenco':
       return <Elenco />;
     case 'nuova':
-      return <Modulo />;
+      return <Nuova />;
     case 'dettaglio':
       return <Dettaglio id={r.id} />;
     case 'modifica':
-      return <Modulo id={r.id} />;
+      return <Modifica id={r.id} />;
     case 'sconosciuta':
       return (
         <p className="vuoto">

@@ -1,0 +1,103 @@
+import {
+  CAPACITA_MASSIMA,
+  CAPACITA_MINIMA,
+  CATEGORIE,
+  DURATA_MASSIMA,
+  DURATA_MINIMA,
+  LUNGHEZZA_MASSIMA,
+  POLITICHE,
+} from 'modello';
+import type { Campo, Valori } from '../modulo';
+import { CATEGORIA, ERRORE_CAMPO, POLITICA } from '../testi';
+
+// Campi di un modulo di creazione o modifica di un evento
+export function Campi({ valori, errori }: { valori: Valori; errori: string[] }) {
+  const errore = (campo: Campo) =>
+    errori.includes(campo) && <span className="errore-campo">{ERRORE_CAMPO[campo]}</span>;
+
+  return (
+    <>
+      <label>
+        Titolo
+        <input name="titolo" defaultValue={valori.titolo} required maxLength={LUNGHEZZA_MASSIMA.titolo} />
+        {errore('titolo')}
+      </label>
+
+      <label>
+        Descrizione
+        <textarea
+          name="descrizione"
+          defaultValue={valori.descrizione}
+          rows={3}
+          maxLength={LUNGHEZZA_MASSIMA.descrizione}
+        />
+        {errore('descrizione')}
+      </label>
+
+      <label>
+        Categoria
+        <select key={valori.categoria} name="categoria" defaultValue={valori.categoria}>
+          {CATEGORIE.map((c) => (
+            <option key={c} value={c}>
+              {CATEGORIA[c]}
+            </option>
+          ))}
+        </select>
+        {errore('categoria')}
+      </label>
+
+      <div className="affiancati">
+        <label>
+          Inizio
+          <input type="datetime-local" name="inizio" defaultValue={valori.inizio} required />
+          {errore('inizio')}
+        </label>
+
+        <label>
+          Durata in minuti
+          <input
+            type="number"
+            name="durataMinuti"
+            defaultValue={valori.durataMinuti}
+            required
+            min={DURATA_MINIMA}
+            max={DURATA_MASSIMA}
+          />
+          {errore('durataMinuti')}
+        </label>
+      </div>
+
+      <label>
+        Luogo
+        <input name="luogo" defaultValue={valori.luogo} required maxLength={LUNGHEZZA_MASSIMA.luogo} />
+        {errore('luogo')}
+      </label>
+
+      <label>
+        Posti, te compreso
+        <input
+          type="number"
+          name="capacita"
+          defaultValue={valori.capacita}
+          required
+          min={CAPACITA_MINIMA}
+          max={CAPACITA_MASSIMA}
+        />
+        {errore('capacita')}
+      </label>
+
+      <fieldset>
+        <legend>A posti finiti, chi entra per primo dalla lista d’attesa</legend>
+        {POLITICHE.map((p) => (
+          <label key={p} className="scelta">
+            <input type="radio" name="politicaCoda" value={p} defaultChecked={valori.politicaCoda === p} />
+            <span>
+              <strong>{POLITICA[p].nome}</strong>: {POLITICA[p].regola}
+            </span>
+          </label>
+        ))}
+        {errore('politicaCoda')}
+      </fieldset>
+    </>
+  );
+}

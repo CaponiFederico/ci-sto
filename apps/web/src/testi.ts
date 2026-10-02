@@ -1,4 +1,13 @@
-import type { Attivita, Categoria } from 'modello';
+import {
+  CAPACITA_MASSIMA,
+  CAPACITA_MINIMA,
+  DURATA_MINIMA,
+  LUNGHEZZA_MASSIMA,
+  type Attivita,
+  type Categoria,
+  type PoliticaCoda,
+} from 'modello';
+import type { Campo } from './modulo';
 
 export const CATEGORIA: Record<Categoria, string> = {
   sport: 'Sport',
@@ -6,6 +15,25 @@ export const CATEGORIA: Record<Categoria, string> = {
   trasporto: 'Trasporto',
   svago: 'Svago',
   altro: 'Altro',
+};
+
+export const POLITICA: Record<PoliticaCoda, { nome: string; regola: string }> = {
+  fifo: { nome: 'Ordine d’arrivo', regola: 'chi si è messo in lista prima' },
+  affinita: { nome: 'Affinità', regola: 'chi ha già partecipato più volte con chi ha il posto' },
+  esplorazione: { nome: 'Esplorazione', regola: 'chi conosce meno il gruppo' },
+  rotazione: { nome: 'Rotazione', regola: 'chi non partecipa da più tempo' },
+  equita: { nome: 'Equità', regola: 'chi è rimasto escluso più volte' },
+};
+
+export const ERRORE_CAMPO: Record<Campo, string> = {
+  titolo: `Serve un titolo, al massimo ${LUNGHEZZA_MASSIMA.titolo} caratteri.`,
+  descrizione: `La descrizione supera i ${LUNGHEZZA_MASSIMA.descrizione} caratteri.`,
+  categoria: 'Scegli una categoria.',
+  inizio: 'L’inizio deve essere nel futuro.',
+  durataMinuti: `La durata va da ${DURATA_MINIMA} minuti a 24 ore.`,
+  luogo: `Indica dove ci si trova, al massimo ${LUNGHEZZA_MASSIMA.luogo} caratteri.`,
+  capacita: `I posti vanno da ${CAPACITA_MINIMA} a ${CAPACITA_MASSIMA}, te compreso.`,
+  politicaCoda: 'Scegli come funziona la lista d’attesa.',
 };
 
 export function quando(istante: number) {

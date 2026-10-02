@@ -5,11 +5,14 @@ const base = import.meta.env.VITE_API_BASE_URL;
 export class ErroreApi extends Error {
   readonly stato: number;
   readonly codice: string;
+  // I campi rifiutati
+  readonly campi: string[];
 
-  constructor(stato: number, codice: string) {
+  constructor(stato: number, codice: string, campi: string[] = []) {
     super(`${stato} ${codice}`);
     this.stato = stato;
     this.codice = codice;
+    this.campi = campi;
   }
 }
 
@@ -23,7 +26,7 @@ export async function chiamaApi<T>(percorso: string, opzioni: RequestInit = {}):
     ...opzioni.headers,
   };
 
-  // fetch solleva solo se la rete fallisce: un 4xx è una risposta, e va distinto.
+  // fetch solleva solo se la rete fallisce
   let risposta: Response;
   try {
     risposta = await fetch(`${base}${percorso}`, { ...opzioni, headers: intestazioni });
@@ -33,7 +36,8 @@ export async function chiamaApi<T>(percorso: string, opzioni: RequestInit = {}):
 
   const corpo = await risposta.json().catch(() => ({}) as Record<string, unknown>);
   if (!risposta.ok) {
-    throw new ErroreApi(risposta.status, String(corpo.error ?? 'errore_sconosciuto'));
+    const campi = Array.isArray(corpo.campi) ? corpo.campi.map(String) : [];
+    throw new ErroreApi(risposta.status, String(corpo.error ?? 'errore_sconosciuto'), campi);
   }
   return corpo as T;
 }

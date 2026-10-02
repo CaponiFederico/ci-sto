@@ -22,6 +22,10 @@ export function usePercorso() {
   return percorso;
 }
 
+export function vai(percorso: string) {
+  location.hash = percorso;
+}
+
 export function rotta(percorso: string): Rotta {
   const [primo, id, azione, ...resto] = percorso.split('/').filter(Boolean);
 

@@ -3,6 +3,9 @@ import {
   CAPACITA_MINIMA,
   CATEGORIE,
   COLLEZIONI,
+  DURATA_MASSIMA,
+  DURATA_MINIMA,
+  LUNGHEZZA_MASSIMA,
   POLITICHE,
   SOTTOCOLLEZIONI,
   type Attivita,
@@ -12,9 +15,6 @@ import {
   type Partecipante,
 } from 'modello';
 import { db } from './firestore.js';
-
-export const DURATA_MINIMA = 15;
-export const DURATA_MASSIMA = 24 * 60;
 
 type Esito<T> = { ok: true; valore: T } | { ok: false; errori: string[] };
 
@@ -35,7 +35,7 @@ function luogo(valore: unknown): Luogo | null {
   if (typeof valore !== 'object' || valore === null) return null;
   const { testo: t, nome, lat, lon } = valore as Record<string, unknown>;
 
-  const descrizione = testo(t, 200);
+  const descrizione = testo(t, LUNGHEZZA_MASSIMA.luogo);
   if (descrizione === null) return null;
 
   const risultato: Luogo = { testo: descrizione };
@@ -56,8 +56,8 @@ type Validatore<T> = (valore: unknown, adesso: number) => T | null;
 
 // Una regola per campo
 const validatori: { [C in keyof NuovaAttivita]: Validatore<NuovaAttivita[C]> } = {
-  titolo: (v) => testo(v, 120),
-  descrizione: (v) => testo(v ?? '', 2000, false),
+  titolo: (v) => testo(v, LUNGHEZZA_MASSIMA.titolo),
+  descrizione: (v) => testo(v ?? '', LUNGHEZZA_MASSIMA.descrizione, false),
   categoria: (v) => CATEGORIE.find((c) => c === v) ?? null,
   inizio: (v, adesso) => (typeof v === 'number' && v > adesso ? v : null),
   durataMinuti: (v) => intero(v, DURATA_MINIMA, DURATA_MASSIMA),

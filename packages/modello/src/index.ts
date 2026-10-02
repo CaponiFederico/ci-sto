@@ -14,6 +14,12 @@ export const SOTTOCOLLEZIONI = {
 export const CAPACITA_MINIMA = 2;
 export const CAPACITA_MASSIMA = 100;
 
+export const DURATA_MINIMA = 15;
+export const DURATA_MASSIMA = 24 * 60;
+
+// Li usano sia i controlli dell'API sia il modulo nel browser
+export const LUNGHEZZA_MASSIMA = { titolo: 120, descrizione: 2000, luogo: 200 } as const;
+
 export type Categoria = 'sport' | 'studio' | 'trasporto' | 'svago' | 'altro';
 
 export const CATEGORIE: readonly Categoria[] = ['sport', 'studio', 'trasporto', 'svago', 'altro'];
