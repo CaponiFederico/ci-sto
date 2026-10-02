@@ -1,11 +1,11 @@
 import {
   COLLEZIONI,
   SOTTOCOLLEZIONI,
+  entitaModifica,
+  stessoLuogo,
   type Attivita,
-  type EntitaModifica,
   type EsitoAnnullamento,
   type EsitoModifica,
-  type Luogo,
   type Evento,
   type MotivoRifiutoModifica,
   type Partecipante,
@@ -15,29 +15,9 @@ import { leggiCoda, leggiPosti } from './coda.js';
 import { db, ID_ATTIVITA, TENTATIVI } from './firestore.js';
 import { promuovi, scadenzaRiconferma, applicaScadenze } from './riconferme.js';
 
-// Oltre questo spostamento, di inizio o di fine
-export const SOGLIA_MINUTI = 30;
-
-const MINUTO = 60 * 1000;
-
-// Con le coordinate conta il punto
-export function stessoLuogo(a: Luogo, b: Luogo) {
-  const coordinate = (l: Luogo) => l.lat !== undefined && l.lon !== undefined;
-  if (coordinate(a) && coordinate(b)) return a.lat === b.lat && a.lon === b.lon;
-  return a.testo === b.testo;
-}
-
-type Quando = Pick<Attivita, 'inizio' | 'durataMinuti' | 'luogo'>;
-
-export function entitaModifica(prima: Quando, dopo: Quando): EntitaModifica {
-  const fine = (q: Quando) => q.inizio + q.durataMinuti * MINUTO;
-  const soglia = SOGLIA_MINUTI * MINUTO;
-  const minore =
-    Math.abs(dopo.inizio - prima.inizio) <= soglia &&
-    Math.abs(fine(dopo) - fine(prima)) <= soglia &&
-    stessoLuogo(prima.luogo, dopo.luogo);
-  return minore ? 'minore' : 'maggiore';
-}
+// La regola minore/maggiore sta nel modello
+// la usa anche il browser per avvisare prima dell'invio
+export { entitaModifica, stessoLuogo, SOGLIA_MINUTI } from 'modello';
 
 function rifiutato(motivo: MotivoRifiutoModifica): EsitoModifica {
   return { esito: 'rifiutato', motivo };
@@ -86,7 +66,7 @@ export async function modificaAttivita(
     // Conferma necessaria in caso riduzione posti
     if (eccesso > 0 && !forza) return { esito: 'conferma_richiesta', retrocessi: eccesso };
 
-    const dopo: Quando = {
+    const dopo = {
       inizio: modifica.inizio ?? attivita.inizio,
       durataMinuti: modifica.durataMinuti ?? attivita.durataMinuti,
       luogo: modifica.luogo ?? attivita.luogo,

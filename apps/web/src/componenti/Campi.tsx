@@ -6,12 +6,20 @@ import {
   DURATA_MINIMA,
   LUNGHEZZA_MASSIMA,
   POLITICHE,
+  type PoliticaCoda,
 } from 'modello';
 import type { Campo, Valori } from '../modulo';
 import { CATEGORIA, ERRORE_CAMPO, POLITICA } from '../testi';
 
 // Campi di un modulo di creazione o modifica di un evento
-export function Campi({ valori, errori }: { valori: Valori; errori: string[] }) {
+interface Proprieta {
+  valori: Valori;
+  errori: string[];
+  // La politica si cambia solo a lista d'attesa vuota
+  politicaBloccata?: boolean;
+}
+
+export function Campi({ valori, errori, politicaBloccata = false }: Proprieta) {
   const errore = (campo: Campo) =>
     errori.includes(campo) && <span className="errore-campo">{ERRORE_CAMPO[campo]}</span>;
 
@@ -86,7 +94,15 @@ export function Campi({ valori, errori }: { valori: Valori; errori: string[] }) 
         {errore('capacita')}
       </label>
 
-      <fieldset>
+      {politicaBloccata && (
+        <p className="nota">
+          <input type="hidden" name="politicaCoda" value={valori.politicaCoda} />
+          Lista d’attesa: <strong>{POLITICA[valori.politicaCoda as PoliticaCoda].nome}</strong>. C’è qualcuno
+          in lista: la regola si può cambiare solo quando è vuota.
+        </p>
+      )}
+
+      <fieldset hidden={politicaBloccata} disabled={politicaBloccata}>
         <legend>A posti finiti, chi entra per primo dalla lista d’attesa</legend>
         {POLITICHE.map((p) => (
           <label key={p} className="scelta">

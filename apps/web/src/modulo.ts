@@ -1,4 +1,4 @@
-import { CATEGORIE, type Categoria, type NuovaAttivita, type PoliticaCoda } from 'modello';
+import { CATEGORIE, type Attivita, type Categoria, type NuovaAttivita, type PoliticaCoda } from 'modello';
 
 const CAMPI = [
   'titolo',
@@ -43,4 +43,30 @@ export function inAttivita(v: Valori): NuovaAttivita {
     capacita: Number(v.capacita),
     politicaCoda: v.politicaCoda as PoliticaCoda,
   };
+}
+
+function oraLocale(istante: number) {
+  const d = new Date(istante);
+  const due = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${due(d.getMonth() + 1)}-${due(d.getDate())}T${due(d.getHours())}:${due(d.getMinutes())}`;
+}
+
+export function daAttivita(a: Attivita): Valori {
+  return {
+    titolo: a.titolo,
+    descrizione: a.descrizione,
+    categoria: a.categoria,
+    inizio: oraLocale(a.inizio),
+    durataMinuti: String(a.durataMinuti),
+    luogo: a.luogo.testo,
+    capacita: String(a.capacita),
+    politicaCoda: a.politicaCoda,
+  };
+}
+
+// Solo i campi toccati
+export function cambiati(prima: Valori, dopo: Valori) {
+  const tutti = inAttivita(dopo);
+  const toccati = CAMPI.filter((c) => prima[c] !== dopo[c]);
+  return Object.fromEntries(toccati.map((c) => [c, tutti[c]])) as Partial<NuovaAttivita>;
 }

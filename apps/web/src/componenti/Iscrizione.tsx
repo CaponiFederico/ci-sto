@@ -1,8 +1,8 @@
 import { useActionState } from 'react';
-import { iscrivi, lascia } from '../azioni';
+import { iscrivi, lascia, riconferma } from '../azioni';
 import { useMioStato, type AttivitaConId } from '../dati';
 import { useUtente } from '../sessione';
-import { avvisoIscrizione, avvisoUscita, descriviIscrizione } from '../testi';
+import { avvisoIscrizione, avvisoRiconferma, avvisoUscita, descriviIscrizione } from '../testi';
 
 export function Iscrizione({ attivita, adesso }: { attivita: AttivitaConId; adesso: number }) {
   const utente = useUtente();
@@ -11,9 +11,10 @@ export function Iscrizione({ attivita, adesso }: { attivita: AttivitaConId; ades
   // Lo stato di chi chiede: posizione e motivo li conosce solo l'API
   const [avviso, invia, inCorso] = useActionState(async (_prima: string | null, dati: FormData) => {
     try {
-      return dati.get('azione') === 'iscrivi'
-        ? avvisoIscrizione(await iscrivi(attivita.id))
-        : avvisoUscita(await lascia(attivita.id));
+      const azione = dati.get('azione');
+      if (azione === 'iscrivi') return avvisoIscrizione(await iscrivi(attivita.id));
+      if (azione === 'riconferma') return avvisoRiconferma(await riconferma(attivita.id));
+      return avvisoUscita(await lascia(attivita.id));
     } catch {
       return 'Il servizio non risponde. Riprova fra poco.';
     }
@@ -34,14 +35,25 @@ export function Iscrizione({ attivita, adesso }: { attivita: AttivitaConId; ades
     );
   }
 
-  const { testo, azione, bottone } = descriviIscrizione(stato, attivita, adesso);
+  const { testo, bottoni } = descriviIscrizione(stato, attivita, adesso);
 
   return (
     <form className="stato" action={invia}>
       <p>{testo}</p>
-      <button type="submit" name="azione" value={azione} disabled={inCorso}>
-        {inCorso ? 'Un momento…' : bottone}
-      </button>
+      <div className="bottoni">
+        {bottoni.map((b, i) => (
+          <button
+            key={b.azione}
+            type="submit"
+            name="azione"
+            value={b.azione}
+            className={i > 0 ? 'secondario' : undefined}
+            disabled={inCorso}
+          >
+            {b.testo}
+          </button>
+        ))}
+      </div>
       {avviso && (
         <p className="errore" role="alert">
           {avviso}

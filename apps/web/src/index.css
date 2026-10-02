@@ -94,6 +94,17 @@ button {
   cursor: pointer;
 }
 
+button.secondario {
+  color: var(--accento);
+  background: transparent;
+}
+
+.bottoni {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 button:disabled {
   opacity: 0.6;
   cursor: default;
@@ -277,6 +288,52 @@ legend {
 }
 
 .stato p {
+  margin: 0;
+}
+
+dialog {
+  max-width: 28rem;
+  padding: 1.25rem;
+  color: var(--testo);
+  background: var(--superficie);
+  border: 1px solid var(--bordo);
+  border-radius: 0.5rem;
+}
+
+dialog::backdrop {
+  background: rgb(0 0 0 / 0.5);
+}
+
+dialog p {
+  margin: 0 0 1rem;
+}
+
+.nota,
+.salvato {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--testo-tenue);
+}
+
+.salvato {
+  padding: 0.5rem 0.75rem;
+  color: var(--testo);
+  background: var(--superficie);
+  border-left: 3px solid var(--accento);
+  border-radius: 0.25rem;
+}
+
+.pericolo {
+  display: grid;
+  justify-items: start;
+  gap: 0.5rem;
+  margin-top: 2.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--bordo);
+}
+
+.pericolo h3,
+.pericolo p {
   margin: 0;
 }
 

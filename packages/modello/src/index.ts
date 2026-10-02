@@ -124,6 +124,32 @@ export type EsitoRiconferma =
 // Minore: gli iscritti restano; maggiore: devono riconfermare.
 export type EntitaModifica = 'minore' | 'maggiore';
 
+export const SOGLIA_MINUTI = 30;
+
+// Tempo per riconfermare dopo una modifica maggiore
+export const RICONFERMA_ORE = 24;
+
+// Con le coordinate conta il punto
+export function stessoLuogo(a: Luogo, b: Luogo) {
+  const coordinate = (l: Luogo) => l.lat !== undefined && l.lon !== undefined;
+  if (coordinate(a) && coordinate(b)) return a.lat === b.lat && a.lon === b.lon;
+  return a.testo === b.testo;
+}
+
+type Quando = Pick<Attivita, 'inizio' | 'durataMinuti' | 'luogo'>;
+
+// La stessa funzione decide nell'API e avvisa nel browser prima dell'invio
+export function entitaModifica(prima: Quando, dopo: Quando): EntitaModifica {
+  const minuto = 60 * 1000;
+  const fine = (q: Quando) => q.inizio + q.durataMinuti * minuto;
+  const soglia = SOGLIA_MINUTI * minuto;
+  const minore =
+    Math.abs(dopo.inizio - prima.inizio) <= soglia &&
+    Math.abs(fine(dopo) - fine(prima)) <= soglia &&
+    stessoLuogo(prima.luogo, dopo.luogo);
+  return minore ? 'minore' : 'maggiore';
+}
+
 export type MotivoRifiutoModifica =
   | 'inesistente'
   | 'non_organizzatore'

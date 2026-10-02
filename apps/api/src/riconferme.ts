@@ -1,6 +1,7 @@
 import type { CollectionReference, Transaction } from 'firebase-admin/firestore';
 import {
   COLLEZIONI,
+  RICONFERMA_ORE,
   SOTTOCOLLEZIONI,
   type Attivita,
   type EsitoRiconferma,
@@ -11,7 +12,7 @@ import {
 import { leggiCoda, type InCoda } from './coda.js';
 import { db, ID_ATTIVITA, TENTATIVI } from './firestore.js';
 
-export const RICONFERMA_ORE = 24;
+export { RICONFERMA_ORE } from 'modello';
 
 // Il tempo di decidere, ma mai oltre l'inizio
 export function scadenzaRiconferma(adesso: number, inizio: number) {

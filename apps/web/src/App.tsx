@@ -55,7 +55,7 @@ function Pagina() {
       // Dettaglio è un componente a parte: gli hook partono solo quando l'attività c'è
       return <Dettaglio key={r.id} id={r.id} />;
     case 'modifica':
-      return <Modifica id={r.id} />;
+      return <Modifica key={r.id} id={r.id} />;
     case 'sconosciuta':
       return (
         <p className="vuoto">
