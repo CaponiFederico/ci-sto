@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 import { statoIscrizione } from './azioni';
 import type { MieiStati } from './filtri';
 import { db } from './firebase';
+import { ascolta, tutte, type Sospesa } from './sospese';
 
 // L'id non è nei dati del documento
 export type AttivitaConId = Attivita & { id: string };
@@ -79,6 +80,29 @@ export function useMieIscrizioni(ids: string[], uid: string) {
   }, [chiave, uid]);
 
   return stati;
+}
+
+// Le mie richieste in attesa di partire
+export function useSospese(uid: string) {
+  const [sospese, setSospese] = useState<Sospesa[]>([]);
+
+  useEffect(() => {
+    let attuale = true;
+    const leggi = () => {
+      tutte(uid)
+        .then((lette) => attuale && setSospese(lette))
+        .catch(() => {});
+    };
+
+    leggi();
+    const smetti = ascolta(leggi);
+    return () => {
+      attuale = false;
+      smetti();
+    };
+  }, [uid]);
+
+  return sospese;
 }
 
 // Una sola attività: undefined finché non arriva, null se non esiste

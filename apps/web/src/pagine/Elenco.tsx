@@ -1,7 +1,7 @@
 import { CATEGORIE } from 'modello';
 import { Salvati } from '../componenti/Salvati';
 import { Scheda } from '../componenti/Scheda';
-import { useElenco, useMieIscrizioni } from '../dati';
+import { useElenco, useMieIscrizioni, useSospese } from '../dati';
 import { filtra, FILTRI_INIZIALI, type Filtri } from '../filtri';
 import { useUtente } from '../sessione';
 import { CATEGORIA, MOSTRA } from '../testi';
@@ -15,6 +15,7 @@ export function Elenco({ filtri, cambiaFiltri }: Proprieta) {
   const utente = useUtente();
   const { attivita, errore, daCache } = useElenco();
   const stati = useMieIscrizioni(attivita?.map((a) => a.id) ?? [], utente.uid);
+  const sospese = useSospese(utente.uid);
 
   const visibili = attivita ? filtra(attivita, filtri, utente.uid, stati) : [];
   const filtrato = filtri.categoria !== 'tutte' || filtri.mostra !== 'tutte';
@@ -84,7 +85,11 @@ export function Elenco({ filtri, cambiaFiltri }: Proprieta) {
           <ul className="elenco">
             {visibili.map((a) => (
               <li key={a.id}>
-                <Scheda attivita={a} mioStato={stati[a.id]} />
+                <Scheda
+                  attivita={a}
+                  mioStato={stati[a.id]}
+                  sospesa={sospese.some((s) => s.idAttivita === a.id)}
+                />
               </li>
             ))}
           </ul>

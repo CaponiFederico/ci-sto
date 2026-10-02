@@ -7,9 +7,10 @@ import { Nome } from './Nome';
 interface Proprieta {
   attivita: AttivitaConId;
   mioStato?: StatoPartecipante;
+  sospesa?: boolean;
 }
 
-export function Scheda({ attivita, mioStato }: Proprieta) {
+export function Scheda({ attivita, mioStato, sospesa = false }: Proprieta) {
   const utente = useUtente();
   const annullata = attivita.stato === 'annullata';
   const organizzo = attivita.organizzatore === utente.uid;
@@ -24,6 +25,7 @@ export function Scheda({ attivita, mioStato }: Proprieta) {
             {MIO_STATO[mioStato]}
           </span>
         )}
+        {sospesa && <span className="etichetta evidenza">Richiesta in sospeso</span>}
       </p>
 
       <h3>

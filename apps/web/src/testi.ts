@@ -23,6 +23,7 @@ import {
 import type { MioStato } from './dati';
 import type { Mostra } from './filtri';
 import type { Campo } from './modulo';
+import type { AzioneSospesa } from './sospese';
 
 export const CATEGORIA: Record<Categoria, string> = {
   sport: 'Sport',
@@ -249,4 +250,17 @@ export function avvisoAnnullamento(esito: EsitoAnnullamento): string | null {
     case 'rifiutato':
       return RIFIUTO_ANNULLAMENTO[esito.motivo];
   }
+}
+
+// In sospeso
+export const SOSPESA: Record<AzioneSospesa, string> = {
+  iscrivi: 'Iscrizione in sospeso: partirà quando torna la rete. Non hai ancora un posto.',
+  lascia: 'Uscita in sospeso: partirà quando torna la rete. Fino ad allora risulti ancora iscritto.',
+  riconferma: 'Riconferma in sospeso: partirà quando torna la rete, e vale solo se arriva prima della scadenza.',
+};
+
+export function inSospeso(quante: number) {
+  return quante === 1
+    ? '1 richiesta in sospeso: partirà quando torna la rete.'
+    : `${quante} richieste in sospeso: partiranno quando torna la rete.`;
 }

@@ -6,6 +6,7 @@ import {
 } from 'firebase/auth';
 import { chiamaApi } from './api';
 import { auth } from './firebase';
+import { svuota } from './sospese';
 
 const google = new GoogleAuthProvider();
 
@@ -44,7 +45,9 @@ export function sessioneRicordata(uid: string) {
   return localStorage.getItem(RICORDO) === uid;
 }
 
-export function esci() {
+export async function esci() {
   localStorage.removeItem(RICORDO);
+  // Svuota le sospese se l'utente si disconnette
+  await svuota().catch(() => {});
   return signOut(auth);
 }

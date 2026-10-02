@@ -339,6 +339,11 @@ legend {
   border-radius: 0.5rem;
 }
 
+.stato.sospesa {
+  border-style: dashed;
+  border-color: var(--accento);
+}
+
 .stato p {
   margin: 0;
 }

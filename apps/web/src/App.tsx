@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { ErroreApi } from './api';
 import { accediConGoogle, accediConPassword, apriSessione, esci, sessioneRicordata } from './auth';
 import { FILTRI_INIZIALI } from './filtri';
+import { useSospese } from './dati';
 import { auth } from './firebase';
 import { Dettaglio } from './pagine/Dettaglio';
 import { Elenco } from './pagine/Elenco';
@@ -11,6 +12,7 @@ import { Nuova } from './pagine/Nuova';
 import { rotta, usePercorso } from './percorso';
 import { useOnline } from './rete';
 import { ContestoUtente } from './sessione';
+import { inSospeso } from './testi';
 
 function messaggio(errore: unknown) {
   if (errore instanceof ErroreApi) {
@@ -70,6 +72,18 @@ function Pagina() {
         </p>
       );
   }
+}
+
+// una richiesta in coda non deve essere dimenticata
+function InSospeso({ uid }: { uid: string }) {
+  const sospese = useSospese(uid);
+  if (sospese.length === 0) return null;
+
+  return (
+    <p className="offline" role="status">
+      {inSospeso(sospese.length)}
+    </p>
+  );
 }
 
 function App() {
@@ -193,6 +207,8 @@ function App() {
             Sei offline: vedi i dati salvati su questo dispositivo.
           </p>
         )}
+
+        {utente && <InSospeso uid={utente.uid} />}
       </header>
 
       <main>
