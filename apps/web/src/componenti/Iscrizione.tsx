@@ -1,12 +1,27 @@
+import type { Evento } from 'modello';
 import { useActionState } from 'react';
 import { ErroreApi } from '../api';
 import { iscrivi, lascia, riconferma } from '../azioni';
 import { useMioStato, useSospese, type AttivitaConId } from '../dati';
 import { useUtente } from '../sessione';
 import { metti, togli, type AzioneSospesa } from '../sospese';
-import { avvisoIscrizione, avvisoRiconferma, avvisoUscita, descriviIscrizione, SOSPESA } from '../testi';
+import {
+  avvisoIscrizione,
+  avvisoRiconferma,
+  avvisoUscita,
+  cambiataDa,
+  descriviIscrizione,
+  SOSPESA,
+} from '../testi';
 
-export function Iscrizione({ attivita, adesso }: { attivita: AttivitaConId; adesso: number }) {
+interface Proprieta {
+  attivita: AttivitaConId;
+  adesso: number;
+  // Gli eventi servono solo per descrivere le iscrizioni sospese che sono state rifiutate perché l'attività è cambiata
+  eventi: Evento[];
+}
+
+export function Iscrizione({ attivita, adesso, eventi }: Proprieta) {
   const utente = useUtente();
   const { stato, errore } = useMioStato(attivita, utente.uid);
   const sospesa = useSospese(utente.uid).find((s) => s.idAttivita === attivita.id);
@@ -15,10 +30,8 @@ export function Iscrizione({ attivita, adesso }: { attivita: AttivitaConId; ades
   const [avviso, invia, inCorso] = useActionState(async (_prima: string | null, dati: FormData) => {
     const azione = dati.get('azione');
     try {
-      if (azione === 'ritira') {
-        await togli(attivita.id);
-        return null;
-      }
+      await togli(attivita.id);
+      if (azione === 'ritira') return null;
       if (azione === 'iscrivi') return avvisoIscrizione(await iscrivi(attivita.id, attivita.versione));
       if (azione === 'riconferma') return avvisoRiconferma(await riconferma(attivita.id));
       return avvisoUscita(await lascia(attivita.id));
@@ -54,12 +67,25 @@ export function Iscrizione({ attivita, adesso }: { attivita: AttivitaConId; ades
   }
   // richiesta in coda
   if (sospesa) {
+    const { rifiuto } = sospesa;
+    // Tre casi: non ancora partita, rifiutata perché l'attività è cambiata, rifiutata per un altro motivo
+    const testo = !rifiuto
+      ? SOSPESA[sospesa.azione]
+      : rifiuto.cambiata
+        ? cambiataDa(eventi, sospesa.versioneVista)
+        : rifiuto.testo;
+
     return (
       <form className="stato sospesa" action={invia}>
-        <p role="status">{SOSPESA[sospesa.azione]}</p>
+        <p role="status">{testo}</p>
         <div className="bottoni">
+          {rifiuto?.cambiata && (
+            <button type="submit" name="azione" value="iscrivi" disabled={inCorso}>
+              Iscriviti lo stesso
+            </button>
+          )}
           <button type="submit" name="azione" value="ritira" className="secondario" disabled={inCorso}>
-            Ritira la richiesta
+            {!rifiuto ? 'Ritira la richiesta' : rifiuto.cambiata ? 'Lascia perdere' : 'Ho capito'}
           </button>
         </div>
         {avviso && (

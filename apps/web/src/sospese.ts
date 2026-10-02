@@ -3,6 +3,14 @@
 
 export type AzioneSospesa = 'iscrivi' | 'lascia' | 'riconferma';
 
+// La risposta del server
+export interface Rifiuto {
+  testo: string;
+  // L'attività è cambiata in modo importante
+  // si può scegliere di iscriversi lo stesso
+  cambiata: boolean;
+}
+
 export interface Sospesa {
   // L'attività a cui si riferisce
   idAttivita: string;
@@ -12,6 +20,7 @@ export interface Sospesa {
   versioneVista: number;
   titolo: string;
   creataIl: number;
+  rifiuto?: Rifiuto;
 }
 
 const NOME = 'bacheca';

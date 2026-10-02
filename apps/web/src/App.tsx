@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { ErroreApi } from './api';
 import { accediConGoogle, accediConPassword, apriSessione, esci, sessioneRicordata } from './auth';
 import { FILTRI_INIZIALI } from './filtri';
+import { inviaSospese } from './invio';
 import { useSospese } from './dati';
 import { auth } from './firebase';
 import { Dettaglio } from './pagine/Dettaglio';
@@ -12,6 +13,7 @@ import { Nuova } from './pagine/Nuova';
 import { rotta, usePercorso } from './percorso';
 import { useOnline } from './rete';
 import { ContestoUtente } from './sessione';
+import { togli } from './sospese';
 import { inSospeso } from './testi';
 
 function messaggio(errore: unknown) {
@@ -74,15 +76,40 @@ function Pagina() {
   }
 }
 
-// una richiesta in coda non deve essere dimenticata
-function InSospeso({ uid }: { uid: string }) {
+// fa partire la coda e mostra che cosa è ancora aperto
+function InSospeso({ uid, online }: { uid: string; online: boolean }) {
   const sospese = useSospese(uid);
-  if (sospese.length === 0) return null;
+
+  // All'apertura dell'app e ogni volta che il browser dice che la rete è tornata
+  useEffect(() => {
+    if (online) void inviaSospese(uid);
+  }, [uid, online]);
+
+  const inAttesa = sospese.filter((s) => !s.rifiuto);
+  const rifiutate = sospese.filter((s) => s.rifiuto);
 
   return (
-    <p className="offline" role="status">
-      {inSospeso(sospese.length)}
-    </p>
+    <>
+      {inAttesa.length > 0 && (
+        <p className="offline" role="status">
+          {inSospeso(inAttesa.length)}{' '}
+          <button type="button" onClick={() => void inviaSospese(uid)}>
+            Riprova ora
+          </button>
+        </p>
+      )}
+
+      {rifiutate.map((s) => (
+        <p key={s.idAttivita} className="errore" role="alert">
+          <a href={`#/attivita/${s.idAttivita}`}>{s.titolo}</a>: {s.rifiuto?.testo}{' '}
+          {!s.rifiuto?.cambiata && (
+            <button type="button" className="secondario" onClick={() => void togli(s.idAttivita)}>
+              Ho capito
+            </button>
+          )}
+        </p>
+      ))}
+    </>
   );
 }
 
@@ -208,7 +235,7 @@ function App() {
           </p>
         )}
 
-        {utente && <InSospeso uid={utente.uid} />}
+        {utente && <InSospeso uid={utente.uid} online={online} />}
       </header>
 
       <main>

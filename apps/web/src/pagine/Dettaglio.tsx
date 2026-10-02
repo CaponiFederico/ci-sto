@@ -95,7 +95,7 @@ function Contenuto({ attivita }: { attivita: AttivitaConId }) {
         </dd>
       </dl>
 
-      <Iscrizione attivita={attivita} adesso={adesso} />
+      <Iscrizione attivita={attivita} adesso={adesso} eventi={eventi} />
 
       <section>
         <h3>Chi partecipa</h3>

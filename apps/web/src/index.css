@@ -162,6 +162,18 @@ textarea {
   border-radius: 0.25rem;
 }
 
+.offline button,
+.errore button {
+  padding: 0.1rem 0.5rem;
+  font-size: inherit;
+}
+
+.offline button {
+  color: inherit;
+  background: transparent;
+  border-color: currentColor;
+}
+
 .offline {
   margin: 0.75rem 0 0;
   padding: 0.4rem 0.75rem;

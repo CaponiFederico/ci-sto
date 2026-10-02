@@ -1,16 +1,16 @@
 import type { StatoPartecipante } from 'modello';
 import type { AttivitaConId } from '../dati';
 import { useUtente } from '../sessione';
-import { CATEGORIA, MIO_STATO, posti, quando } from '../testi';
+import { CATEGORIA, ETICHETTA_SOSPESA, MIO_STATO, posti, quando, type StatoSospesa } from '../testi';
 import { Nome } from './Nome';
 
 interface Proprieta {
   attivita: AttivitaConId;
   mioStato?: StatoPartecipante;
-  sospesa?: boolean;
+  sospesa?: StatoSospesa;
 }
 
-export function Scheda({ attivita, mioStato, sospesa = false }: Proprieta) {
+export function Scheda({ attivita, mioStato, sospesa }: Proprieta) {
   const utente = useUtente();
   const annullata = attivita.stato === 'annullata';
   const organizzo = attivita.organizzatore === utente.uid;
@@ -25,7 +25,11 @@ export function Scheda({ attivita, mioStato, sospesa = false }: Proprieta) {
             {MIO_STATO[mioStato]}
           </span>
         )}
-        {sospesa && <span className="etichetta evidenza">Richiesta in sospeso</span>}
+        {sospesa && (
+          <span className="etichetta evidenza">
+            {ETICHETTA_SOSPESA[sospesa]}
+          </span>
+        )}
       </p>
 
       <h3>

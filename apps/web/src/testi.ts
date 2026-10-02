@@ -41,7 +41,7 @@ export const MOSTRA: Record<Mostra, string> = {
 };
 
 export const MIO_STATO: Record<StatoPartecipante, string> = {
-  confermato: 'Hai un posto',
+  confermato: 'Partecipi',
   in_attesa: 'Sei in lista d’attesa',
   da_confermare: 'Da riconfermare',
 };
@@ -120,7 +120,7 @@ export function descriviIscrizione(stato: MioStato, attivita: Attivita, adesso: 
             bottoni: [{ azione: 'iscrivi', testo: 'Mettiti in lista' }],
           };
     case 'confermato':
-      return { testo: 'Hai un posto.', bottoni: [{ azione: 'lascia', testo: 'Lascia il posto' }] };
+      return { testo: 'Partecipi.', bottoni: [{ azione: 'lascia', testo: 'Lascia il posto' }] };
     case 'in_attesa':
       return {
         // Senza rete posizione e motivo mancano
@@ -264,3 +264,26 @@ export function inSospeso(quante: number) {
     ? '1 richiesta in sospeso: partirà quando torna la rete.'
     : `${quante} richieste in sospeso: partiranno quando torna la rete.`;
 }
+
+export const CAMBIATA_IN_SOSPESO = 'Mentre la richiesta era in sospeso l’attività è stata modificata: aprila per decidere.';
+
+// Che cosa è cambiato dopo la versione che la persona aveva visto
+export function cambiataDa(eventi: Evento[], versioneVista: number) {
+  const toccati = eventi
+    .filter((e) => e.tipo === 'modificata' && e.versione > versioneVista)
+    .flatMap((e) => e.campiModificati ?? []);
+  const nomi = [...new Set(toccati)].map((c) => NOME_CAMPO[c as Campo] ?? c).join(', ');
+
+  return `Mentre la tua richiesta era in sospeso l’attività è stata modificata${
+    nomi ? ` (${nomi})` : ''
+  }. Controlla i dati qui sopra: vuoi iscriverti lo stesso?`;
+}
+
+// Una richiesta in coda
+export type StatoSospesa = 'attesa' | 'cambiata' | 'rifiutata';
+
+export const ETICHETTA_SOSPESA: Record<StatoSospesa, string> = {
+  attesa: 'Richiesta in sospeso',
+  cambiata: 'Richiesta da confermare',
+  rifiutata: 'Richiesta non accolta',
+};

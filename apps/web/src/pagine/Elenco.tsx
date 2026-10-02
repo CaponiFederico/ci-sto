@@ -4,7 +4,7 @@ import { Scheda } from '../componenti/Scheda';
 import { useElenco, useMieIscrizioni, useSospese } from '../dati';
 import { filtra, FILTRI_INIZIALI, type Filtri } from '../filtri';
 import { useUtente } from '../sessione';
-import { CATEGORIA, MOSTRA } from '../testi';
+import { CATEGORIA, MOSTRA, type StatoSospesa } from '../testi';
 
 interface Proprieta {
   filtri: Filtri;
@@ -16,6 +16,13 @@ export function Elenco({ filtri, cambiaFiltri }: Proprieta) {
   const { attivita, errore, daCache } = useElenco();
   const stati = useMieIscrizioni(attivita?.map((a) => a.id) ?? [], utente.uid);
   const sospese = useSospese(utente.uid);
+
+  function sospesaDi(id: string): StatoSospesa | undefined {
+    const trovata = sospese.find((s) => s.idAttivita === id);
+    if (!trovata) return undefined;
+    if (!trovata.rifiuto) return 'attesa';
+    return trovata.rifiuto.cambiata ? 'cambiata' : 'rifiutata';
+  }
 
   const visibili = attivita ? filtra(attivita, filtri, utente.uid, stati) : [];
   const filtrato = filtri.categoria !== 'tutte' || filtri.mostra !== 'tutte';
@@ -88,7 +95,7 @@ export function Elenco({ filtri, cambiaFiltri }: Proprieta) {
                 <Scheda
                   attivita={a}
                   mioStato={stati[a.id]}
-                  sospesa={sospese.some((s) => s.idAttivita === a.id)}
+                  sospesa={sospesaDi(a.id)}
                 />
               </li>
             ))}
