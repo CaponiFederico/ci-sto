@@ -93,6 +93,16 @@ Questo comando avvia l'emulatore Firestore e costruisce uno storico
 npm run popola
 ```
 
+Sul progetto finale lo storico si aggiorna quando un'attività comincia: chi ha il posto risulta
+presente, chi è rimasto in lista risulta escluso. Questo comando lo fa per tutte le attività già
+cominciate e non ancora contate.
+
+ripeterlo non conta due volte.
+
+```bash
+npm run consolida
+```
+
 ## Deploy
 
 Il progetto Firebase è indicato in `.firebaserc`. La prima volta serve autenticarsi:

@@ -1,5 +1,6 @@
 import { FieldValue } from 'firebase-admin/firestore';
 import {
+  chiaveLuogo,
   COLLEZIONI,
   SOTTOCOLLEZIONI,
   type Attivita,
@@ -14,10 +15,7 @@ export type EsitoConsolidamento =
   | { esito: 'gia_consolidata' }
   | { esito: 'rifiutato'; motivo: 'inesistente' | 'annullata' | 'non_iniziata' };
 
-// Per testo
-export function chiaveLuogo(testo: string) {
-  return testo.trim().toLowerCase().replace(/\s+/g, ' ');
-}
+export { chiaveLuogo };
 
 const vuote = (): Statistiche => ({
   partecipazioni: 0,
@@ -91,4 +89,28 @@ export async function consolidaAttivita(
 
     return { esito: 'consolidata', presenti, esclusi };
   }, { maxAttempts: TENTATIVI });
+}
+
+export interface Consolidata {
+  id: string;
+  titolo: string;
+  esito: EsitoConsolidamento;
+}
+
+// Consolida tutte le attività cominciate che non lo sono ancora
+export async function consolidaCominciate(orologio: () => number = Date.now): Promise<Consolidata[]> {
+  const cominciate = await db.collection(COLLEZIONI.attivita).where('inizio', '<=', orologio()).get();
+
+  // Il filtro evita una transazione per ogni attività già a posto
+  const daFare = cominciate.docs.filter((d) => {
+    const attivita = d.data() as Attivita;
+    return attivita.stato !== 'annullata' && (attivita.consolidataIl ?? null) === null;
+  });
+
+  const fatte: Consolidata[] = [];
+  // Una alla volta
+  for (const d of daFare) {
+    fatte.push({ id: d.id, titolo: (d.data() as Attivita).titolo, esito: await consolidaAttivita(d.id, orologio) });
+  }
+  return fatte;
 }

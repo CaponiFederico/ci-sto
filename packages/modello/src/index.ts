@@ -198,6 +198,11 @@ export interface Evento {
   entita?: EntitaModifica;
 }
 
+// uniforma il testo
+export function chiaveLuogo(testo: string) {
+  return testo.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
 export interface Statistiche {
   partecipazioni: number;
   ultimaPartecipazione: number | null;

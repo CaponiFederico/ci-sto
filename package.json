@@ -23,6 +23,7 @@
     "test": "npm run build:modello && npm run build:api && firebase emulators:exec --only auth,firestore \"node --test --test-concurrency=1 test/*.test.mjs\"",
     "test:concorrenza": "npm run build:modello && npm run build:api && firebase emulators:exec --only firestore \"node --test --test-concurrency=1 --test-name-pattern=concorrenza test/iscrizioni.test.mjs test/concorrenza-modifiche.test.mjs test/concorrenza-politiche.test.mjs\"",
     "popola": "npm run build:modello && firebase emulators:exec --only firestore \"npm run popola --workspace api\"",
+    "consolida": "npm run build:modello && npm run consolida --workspace api",
     "emulatori": "firebase emulators:start",
     "deploy": "npm run build:web && firebase deploy --only hosting",
     "deploy:regole": "firebase deploy --only firestore:rules",
