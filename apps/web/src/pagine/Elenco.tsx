@@ -1,8 +1,16 @@
 import { CATEGORIE } from 'modello';
 import { Salvati } from '../componenti/Salvati';
 import { Scheda } from '../componenti/Scheda';
-import { useElenco, useMieIscrizioni, useScaricoAnticipato, useSospese } from '../dati';
+import {
+  useElenco,
+  useMieIscrizioni,
+  useMieStatistiche,
+  usePresenti,
+  useScaricoAnticipato,
+  useSospese,
+} from '../dati';
 import { filtra, FILTRI_INIZIALI, type Filtri } from '../filtri';
+import { ordina } from '../ordine';
 import { useUtente } from '../sessione';
 import { CATEGORIA, MOSTRA, type StatoSospesa } from '../testi';
 
@@ -14,7 +22,10 @@ interface Proprieta {
 export function Elenco({ filtri, cambiaFiltri }: Proprieta) {
   const utente = useUtente();
   const { attivita: lette, errore, daCache, adesso } = useElenco();
-  const stati = useMieIscrizioni(lette?.map((a) => a.id) ?? [], utente.uid);
+  const ids = lette?.map((a) => a.id) ?? [];
+  const stati = useMieIscrizioni(ids, utente.uid);
+  const statistiche = useMieStatistiche(utente.uid);
+  const presenti = usePresenti(ids);
 
   // Un'attività già cominciata resta in elenco solo per chi partecipa
   const attivita = lette?.filter((a) => a.inizio > adesso || stati[a.id] !== undefined) ?? null;
@@ -29,6 +40,9 @@ export function Elenco({ filtri, cambiaFiltri }: Proprieta) {
   }
 
   const visibili = attivita ? filtra(attivita, filtri, utente.uid, stati, adesso) : [];
+  // L'ordine è calcolato qui, sui documenti già scaricati
+  // senza storico coincide con quello per data
+  const ordinate = ordina(visibili, statistiche ?? null, presenti, utente.uid, adesso);
   const filtrato = filtri.categoria !== 'tutte' || filtri.mostra !== 'tutte';
 
   return (
@@ -94,7 +108,7 @@ export function Elenco({ filtri, cambiaFiltri }: Proprieta) {
             </p>
           )}
           <ul className="elenco">
-            {visibili.map((a) => (
+            {ordinate.map(({ attivita: a }) => (
               <li key={a.id}>
                 <Scheda
                   attivita={a}

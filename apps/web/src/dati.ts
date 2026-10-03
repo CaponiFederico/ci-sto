@@ -5,12 +5,14 @@ import {
   type Attivita,
   type Evento,
   type Partecipante,
+  type Statistiche,
   type Utente,
 } from 'modello';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { statoIscrizione } from './azioni';
 import type { MieiStati } from './filtri';
 import { db } from './firebase';
+import type { Presenti } from './ordine';
 import { ascolta, tutte, type Sospesa } from './sospese';
 
 // L'id non è nei dati del documento
@@ -76,18 +78,59 @@ export function useElenco() {
   return { attivita, errore, daCache, adesso };
 }
 
-// Scarica in anticipo i dati di dettaglio delle attività a cui partecipo, così da poterli mostrare anche offline
+// Chi ha il posto in ogni attività dell'elenco: serve a riconoscere le persone con cui ho già partecipato
+// Si legge una volta e non resta in ascolto, così l'ordine non cambia mentre si guarda
+export function usePresenti(ids: string[]) {
+  const [presenti, setPresenti] = useState<Presenti>({});
+  // Le attività già chieste: una nuova in elenco non fa rileggere le altre
+  const chieste = useRef(new Set<string>());
+
+  const chiave = ids.join(',');
+
+  useEffect(() => {
+    const nuove = chiave.split(',').filter((id) => id && !chieste.current.has(id));
+    if (nuove.length === 0) return;
+    for (const id of nuove) chieste.current.add(id);
+
+    const letture = nuove.map((id) =>
+      getDocs(conPosto(id))
+        .then((risultato) => risultato.docs.map((d) => d.id))
+        .catch((): string[] => []),
+    );
+
+    // Un solo aggiornamento per tutte: l'elenco si riordina una volta
+    void Promise.all(letture).then((letti) => {
+      for (const uid of letti.flat()) void leggiNome(uid);
+      setPresenti((prima) => ({ ...prima, ...Object.fromEntries(nuove.map((id, i) => [id, letti[i]])) }));
+    });
+  }, [chiave]);
+
+  return presenti;
+}
+
+// Il mio storico: undefined finché non arriva, null se non c'è ancora o non si può leggere
+export function useMieStatistiche(uid: string) {
+  const [statistiche, setStatistiche] = useState<Statistiche | null | undefined>(undefined);
+
+  useEffect(
+    () =>
+      onSnapshot(
+        doc(db, COLLEZIONI.statistiche, uid),
+        (d) => setStatistiche(d.exists() ? (d.data() as Statistiche) : null),
+        () => setStatistiche(null),
+      ),
+    [uid],
+  );
+
+  return statistiche;
+}
+
+// Per le attività a cui partecipo scarica in anticipo anche la cronologia
 export function useScaricoAnticipato(ids: string[]) {
   const chiave = ids.join(',');
 
   useEffect(() => {
-    for (const id of chiave.split(',').filter(Boolean)) {
-      getDocs(conPosto(id))
-        // Anche i nomi
-        .then((risultato) => risultato.docs.forEach((d) => void leggiNome(d.id)))
-        .catch(() => {});
-      getDocs(cronologiaDi(id)).catch(() => {});
-    }
+    for (const id of chiave.split(',').filter(Boolean)) getDocs(cronologiaDi(id)).catch(() => {});
   }, [chiave]);
 }
 
