@@ -1,7 +1,8 @@
 import { onAuthStateChanged, type User } from 'firebase/auth';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useActionState, useEffect, useState, type FormEvent } from 'react';
 import { ErroreApi } from './api';
 import { accediConGoogle, accediConPassword, apriSessione, esci, sessioneRicordata } from './auth';
+import { Conferma, type Domanda } from './componenti/Conferma';
 import { FILTRI_INIZIALI } from './filtri';
 import { inviaSospese } from './invio';
 import { useSospese } from './dati';
@@ -14,7 +15,7 @@ import { rotta, usePercorso } from './percorso';
 import { useOnline } from './rete';
 import { ContestoUtente } from './sessione';
 import { togli } from './sospese';
-import { inSospeso } from './testi';
+import { domandaUscita, inSospeso } from './testi';
 
 function messaggio(errore: unknown) {
   if (errore instanceof ErroreApi) {
@@ -113,6 +114,29 @@ function InSospeso({ uid, online }: { uid: string; online: boolean }) {
   );
 }
 
+// Uscendo la coda si svuota
+function Uscita({ uid }: { uid: string }) {
+  const inAttesa = useSospese(uid).filter((s) => !s.rifiuto).length;
+
+  const [domanda, azione, inCorso] = useActionState(async (_prima: Domanda | null, dati: FormData) => {
+    const passo = dati.get('passo');
+    if (passo === 'indietro') return null;
+    if (passo === 'chiedi' && inAttesa > 0) return { testo: domandaUscita(inAttesa) };
+
+    await esci();
+    return null;
+  }, null);
+
+  return (
+    <form action={azione}>
+      <button type="submit" name="passo" value="chiedi" disabled={inCorso}>
+        Esci
+      </button>
+      {domanda && <Conferma domanda={domanda} inCorso={inCorso} />}
+    </form>
+  );
+}
+
 function App() {
   const [utente, setUtente] = useState<User | null>(null);
   const [sessioneVerificata, setSessioneVerificata] = useState(false);
@@ -183,9 +207,7 @@ function App() {
           ) : utente ? (
             <>
               <span>{utente.email}</span>
-              <button type="button" onClick={() => void esci()}>
-                Esci
-              </button>
+              <Uscita uid={utente.uid} />
             </>
           ) : (
             <button

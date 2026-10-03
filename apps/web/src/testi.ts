@@ -265,6 +265,12 @@ export function inSospeso(quante: number) {
     : `${quante} richieste in sospeso: partiranno quando torna la rete.`;
 }
 
+export function domandaUscita(quante: number) {
+  return quante === 1
+    ? 'Hai 1 richiesta in sospeso: uscendo non partirà più. Vuoi uscire lo stesso?'
+    : `Hai ${quante} richieste in sospeso: uscendo non partiranno più. Vuoi uscire lo stesso?`;
+}
+
 export const CAMBIATA_IN_SOSPESO = 'Mentre la richiesta era in sospeso l’attività è stata modificata: aprila per decidere.';
 
 // Che cosa è cambiato dopo la versione che la persona aveva visto

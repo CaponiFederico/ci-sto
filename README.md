@@ -121,6 +121,9 @@ apps/
     src/componenti/       scheda, campi del modulo, iscrizione, conferma, nome
     src/dati.ts           letture da Firestore in tempo reale
     src/azioni.ts         scritture, sempre tramite l'API
+    src/sospese.ts        richieste in sospeso, salvate su IndexedDB
+    src/invio.ts          invio delle richieste in sospeso al ritorno della rete
+    src/rete.ts           stato della connessione
     src/testi.ts          messaggi per ogni stato ed esito
     src/sw.ts             service worker: precaching, fallback offline
     public/offline.html   pagina di fallback offline
@@ -151,6 +154,24 @@ ha il posto e chi va in lista d'attesa.
 | `/#/nuova` | pubblicazione di un'attività |
 | `/#/attivita/<id>` | dettaglio: iscrizione, uscita, posizione in lista d'attesa, riconferma |
 | `/#/attivita/<id>/modifica` | modifica e annullamento, solo per chi organizza |
+
+## Senza rete
+
+Chi ha già aperto l'app su un dispositivo continua a usarla anche senza connessione.
+
+| | Senza rete |
+|---|---|
+| sessione | resta aperta; un avviso in alto dice che si è offline |
+| elenco e dettaglio | si vede l'ultima copia scaricata, indicata come «dati salvati» |
+| attività a cui si partecipa | luogo, orario, partecipanti e cronologia sono scaricati in anticipo |
+| iscrizione, uscita, riconferma | la richiesta resta "in sospeso" sul dispositivo e parte da sola al ritorno della rete |
+| pubblicazione, modifica, annullamento | serve la rete |
+
+Una richiesta in sospeso non è un posto garantito. Chi effettivamente ha il posto lo decide l'API quando la richiesta
+arriva, nell'ordine in cui arrivano. Se nel frattempo l'attività è stata spostata, la richiesta non
+viene accettata automaticamente ma l'app mostra che cosa è cambiato e chiede se iscriversi lo stesso.
+
+Uscendo dall'account le richieste in sospeso vengono scartate, dopo una conferma.
 
 ## Account di prova
 
