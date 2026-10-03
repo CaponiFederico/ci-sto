@@ -3,12 +3,16 @@ import type { AttivitaConId } from './dati';
 
 export type Mostra = 'tutte' | 'mie' | 'organizzo' | 'libere';
 
+// Per te
+export type Ordine = 'per_te' | 'data';
+
 export interface Filtri {
   categoria: Categoria | 'tutte';
   mostra: Mostra;
+  ordine: Ordine;
 }
 
-export const FILTRI_INIZIALI: Filtri = { categoria: 'tutte', mostra: 'tutte' };
+export const FILTRI_INIZIALI: Filtri = { categoria: 'tutte', mostra: 'tutte', ordine: 'per_te' };
 
 // Il mio stato in ogni attività dell'elenco
 export type MieiStati = Record<string, StatoPartecipante | undefined>;

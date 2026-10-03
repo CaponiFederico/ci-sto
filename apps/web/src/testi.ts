@@ -21,8 +21,9 @@ import {
   type StatoPartecipante,
 } from 'modello';
 import type { MioStato } from './dati';
-import type { Mostra } from './filtri';
+import type { Mostra, Ordine } from './filtri';
 import type { Campo } from './modulo';
+import type { Motivo } from './ordine';
 import type { AzioneSospesa } from './sospese';
 
 export const CATEGORIA: Record<Categoria, string> = {
@@ -39,6 +40,31 @@ export const MOSTRA: Record<Mostra, string> = {
   organizzo: 'Organizzate da me',
   libere: 'Con posti liberi',
 };
+
+export const ORDINE: Record<Ordine, string> = {
+  per_te: 'Per te',
+  data: 'Per data',
+};
+
+// Perché un'attività sta in alto
+export function motivoOrdine(motivo: Motivo) {
+  const n = motivo.quanti;
+  switch (motivo.segnale) {
+    case 'persone':
+      return n === 1
+        ? 'Con 1 persona con cui hai già partecipato'
+        : `Con ${n} persone con cui hai già partecipato`;
+    case 'categoria':
+      return n === 1
+        ? 'Hai già partecipato 1 volta ad attività di questa categoria'
+        : `Hai già partecipato ${n} volte ad attività di questa categoria`;
+    case 'luogo':
+      return n === 1 ? 'Sei già stato qui 1 volta' : `Sei già stato qui ${n} volte`;
+  }
+}
+
+export const SENZA_STORICO =
+  'Non hai ancora partecipato a nessuna attività: per ora l’ordine è quello per data.';
 
 export const MIO_STATO: Record<StatoPartecipante, string> = {
   confermato: 'Partecipi',

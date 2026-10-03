@@ -9,9 +9,10 @@ interface Proprieta {
   mioStato?: StatoPartecipante;
   sospesa?: StatoSospesa;
   cominciata?: boolean;
+  motivo?: string;
 }
 
-export function Scheda({ attivita, mioStato, sospesa, cominciata = false }: Proprieta) {
+export function Scheda({ attivita, mioStato, sospesa, cominciata = false, motivo }: Proprieta) {
   const utente = useUtente();
   const annullata = attivita.stato === 'annullata';
   const organizzo = attivita.organizzatore === utente.uid;
@@ -49,6 +50,7 @@ export function Scheda({ attivita, mioStato, sospesa, cominciata = false }: Prop
       </p>
 
       <p className="posti">{posti(attivita)}</p>
+      {motivo && !annullata && <p className="motivo">{motivo}</p>}
     </article>
   );
 }

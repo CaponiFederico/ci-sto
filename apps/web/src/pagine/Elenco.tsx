@@ -10,9 +10,9 @@ import {
   useSospese,
 } from '../dati';
 import { filtra, FILTRI_INIZIALI, type Filtri } from '../filtri';
-import { ordina } from '../ordine';
+import { ordina, type Valutata } from '../ordine';
 import { useUtente } from '../sessione';
-import { CATEGORIA, MOSTRA, type StatoSospesa } from '../testi';
+import { CATEGORIA, MOSTRA, motivoOrdine, ORDINE, SENZA_STORICO, type StatoSospesa } from '../testi';
 
 interface Proprieta {
   filtri: Filtri;
@@ -42,7 +42,12 @@ export function Elenco({ filtri, cambiaFiltri }: Proprieta) {
   const visibili = attivita ? filtra(attivita, filtri, utente.uid, stati, adesso) : [];
   // L'ordine è calcolato qui, sui documenti già scaricati
   // senza storico coincide con quello per data
-  const ordinate = ordina(visibili, statistiche ?? null, presenti, utente.uid, adesso);
+  const personale = filtri.ordine === 'per_te';
+  const ordinate: Pick<Valutata, 'attivita' | 'motivo'>[] = personale
+    ? ordina(visibili, statistiche ?? null, presenti, utente.uid, adesso)
+    : visibili.map((a) => ({ attivita: a, motivo: null }));
+  // Chi non ha mai partecipato vede l'ordine per data
+  const senzaStorico = personale && statistiche !== undefined && (statistiche?.partecipazioni ?? 0) === 0;
   const filtrato = filtri.categoria !== 'tutte' || filtri.mostra !== 'tutte';
 
   return (
@@ -83,6 +88,20 @@ export function Elenco({ filtri, cambiaFiltri }: Proprieta) {
             ))}
           </select>
         </label>
+
+        <label>
+          Ordina
+          <select
+            value={filtri.ordine}
+            onChange={(e) => cambiaFiltri({ ...filtri, ordine: e.target.value as Filtri['ordine'] })}
+          >
+            {Object.entries(ORDINE).map(([valore, etichetta]) => (
+              <option key={valore} value={valore}>
+                {etichetta}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       {errore ? (
@@ -96,7 +115,7 @@ export function Elenco({ filtri, cambiaFiltri }: Proprieta) {
       ) : visibili.length === 0 ? (
         <p className="vuoto">
           Nessuna attività con questi filtri.{' '}
-          <button type="button" className="secondario" onClick={() => cambiaFiltri(FILTRI_INIZIALI)}>
+          <button type="button" className="secondario" onClick={() => cambiaFiltri({ ...FILTRI_INIZIALI, ordine: filtri.ordine })}>
             Togli i filtri
           </button>
         </p>
@@ -107,14 +126,16 @@ export function Elenco({ filtri, cambiaFiltri }: Proprieta) {
               {visibili.length} su {attivita.length}
             </p>
           )}
+          {senzaStorico && <p className="nota">{SENZA_STORICO}</p>}
           <ul className="elenco">
-            {ordinate.map(({ attivita: a }) => (
+            {ordinate.map(({ attivita: a, motivo }) => (
               <li key={a.id}>
                 <Scheda
                   attivita={a}
                   mioStato={stati[a.id]}
                   sospesa={sospesaDi(a.id)}
                   cominciata={a.inizio <= adesso}
+                  motivo={motivo ? motivoOrdine(motivo) : undefined}
                 />
               </li>
             ))}

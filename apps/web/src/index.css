@@ -340,6 +340,12 @@ legend {
   font-weight: 600;
 }
 
+.motivo {
+  margin-top: 0.4rem;
+  font-size: 0.875rem;
+  color: var(--testo-tenue);
+}
+
 .stato {
   display: grid;
   justify-items: start;
