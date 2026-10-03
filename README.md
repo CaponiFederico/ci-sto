@@ -134,6 +134,8 @@ apps/
     src/sospese.ts        richieste in sospeso, salvate su IndexedDB
     src/invio.ts          invio delle richieste in sospeso al ritorno della rete
     src/rete.ts           stato della connessione
+    src/filtri.ts         filtri dell'elenco
+    src/ordine.ts         ordine personale: pesi, punteggio, motivo
     src/testi.ts          messaggi per ogni stato ed esito
     src/sw.ts             service worker: precaching, fallback offline
     public/offline.html   pagina di fallback offline
@@ -160,10 +162,27 @@ ha il posto e chi va in lista d'attesa.
 
 | Indirizzo | Pagina |
 |---|---|
-| `/#/` | elenco delle attività in programma, con filtri |
+| `/#/` | elenco delle attività in programma, con filtri e ordine personale |
 | `/#/nuova` | pubblicazione di un'attività |
 | `/#/attivita/<id>` | dettaglio: iscrizione, uscita, posizione in lista d'attesa, riconferma |
 | `/#/attivita/<id>/modifica` | modifica e annullamento, solo per chi organizza |
+
+## Ordine personale
+
+Con «Ordina: Per te» ogni persona vede la bacheca con un ordionamento personale.
+
+Il punteggio di un'attività è una somma di quattro segnali moltiplicati per un peso:
+
+| Segnale | Descrizone | Peso |
+|---|---|---|
+| persone | quante persone con cui si è già partecipato hanno il posto (fino a 3) | 3 |
+| categoria | quante volte si è partecipato ad attività di quella categoria (fino a 5) | 2 |
+| luogo | quante volte si è stati in quel luogo (fino a 5) | 1 |
+| imminenza | quanto è vicina: 1 se comincia adesso, 0 da 14 giorni in poi | 4 |
+
+Il calcolo avviene nel browser, sui documenti già scaricati.
+Pesi e soglie stanno in `apps/web/src/ordine.ts`.
+
 
 ## Senza rete
 
