@@ -14,7 +14,7 @@ export const FILTRI_INIZIALI: Filtri = { categoria: 'tutte', mostra: 'tutte' };
 export type MieiStati = Record<string, StatoPartecipante | undefined>;
 
 // Si filtra sui documenti già scaricati
-export function filtra(elenco: AttivitaConId[], filtri: Filtri, uid: string, stati: MieiStati) {
+export function filtra(elenco: AttivitaConId[], filtri: Filtri, uid: string, stati: MieiStati, adesso: number) {
   return elenco.filter((a) => {
     if (filtri.categoria !== 'tutte' && a.categoria !== filtri.categoria) return false;
 
@@ -26,7 +26,7 @@ export function filtra(elenco: AttivitaConId[], filtri: Filtri, uid: string, sta
       case 'organizzo':
         return a.organizzatore === uid;
       case 'libere':
-        return a.stato !== 'annullata' && a.postiOccupati < a.capacita;
+        return a.stato !== 'annullata' && a.inizio > adesso && a.postiOccupati < a.capacita;
     }
   });
 }

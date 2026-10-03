@@ -1,7 +1,7 @@
 import { CATEGORIE } from 'modello';
 import { Salvati } from '../componenti/Salvati';
 import { Scheda } from '../componenti/Scheda';
-import { useElenco, useMieIscrizioni, useSospese } from '../dati';
+import { useElenco, useMieIscrizioni, useScaricoAnticipato, useSospese } from '../dati';
 import { filtra, FILTRI_INIZIALI, type Filtri } from '../filtri';
 import { useUtente } from '../sessione';
 import { CATEGORIA, MOSTRA, type StatoSospesa } from '../testi';
@@ -13,8 +13,12 @@ interface Proprieta {
 
 export function Elenco({ filtri, cambiaFiltri }: Proprieta) {
   const utente = useUtente();
-  const { attivita, errore, daCache } = useElenco();
-  const stati = useMieIscrizioni(attivita?.map((a) => a.id) ?? [], utente.uid);
+  const { attivita: lette, errore, daCache, adesso } = useElenco();
+  const stati = useMieIscrizioni(lette?.map((a) => a.id) ?? [], utente.uid);
+
+  // Un'attività già cominciata resta in elenco solo per chi partecipa
+  const attivita = lette?.filter((a) => a.inizio > adesso || stati[a.id] !== undefined) ?? null;
+  useScaricoAnticipato((lette ?? []).filter((a) => stati[a.id] !== undefined).map((a) => a.id));
   const sospese = useSospese(utente.uid);
 
   function sospesaDi(id: string): StatoSospesa | undefined {
@@ -24,7 +28,7 @@ export function Elenco({ filtri, cambiaFiltri }: Proprieta) {
     return trovata.rifiuto.cambiata ? 'cambiata' : 'rifiutata';
   }
 
-  const visibili = attivita ? filtra(attivita, filtri, utente.uid, stati) : [];
+  const visibili = attivita ? filtra(attivita, filtri, utente.uid, stati, adesso) : [];
   const filtrato = filtri.categoria !== 'tutte' || filtri.mostra !== 'tutte';
 
   return (
@@ -96,6 +100,7 @@ export function Elenco({ filtri, cambiaFiltri }: Proprieta) {
                   attivita={a}
                   mioStato={stati[a.id]}
                   sospesa={sospesaDi(a.id)}
+                  cominciata={a.inizio <= adesso}
                 />
               </li>
             ))}

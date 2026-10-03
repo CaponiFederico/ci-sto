@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, onSnapshot, orderBy, query, where } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, onSnapshot, orderBy, query, where } from 'firebase/firestore';
 import {
   COLLEZIONI,
   SOTTOCOLLEZIONI,
@@ -26,6 +26,22 @@ export type MioStato =
   | { stato: 'in_attesa'; coda: { posizione: number; motivo: string } | null }
   | { stato: 'da_confermare'; entro: number };
 
+const RECENTE = 3 * 60 * 60 * 1000;
+
+function conPosto(id: string) {
+  return query(
+    collection(db, COLLEZIONI.attivita, id, SOTTOCOLLEZIONI.partecipanti),
+    where('stato', 'in', ['confermato', 'da_confermare']),
+  );
+}
+
+function cronologiaDi(id: string) {
+  return query(
+    collection(db, COLLEZIONI.attivita, id, SOTTOCOLLEZIONI.eventi),
+    where('tipo', 'in', ['creata', 'modificata', 'annullata']),
+  );
+}
+
 // attività per data
 export function useElenco() {
   const [attivita, setAttivita] = useState<AttivitaConId[] | null>(null);
@@ -35,9 +51,10 @@ export function useElenco() {
   const [adesso] = useState(Date.now);
 
   useEffect(() => {
+    // Anche quelle cominciate da poco: chi vi partecipa deve poterle ritrovare
     const prossime = query(
       collection(db, COLLEZIONI.attivita),
-      where('inizio', '>=', adesso),
+      where('inizio', '>=', adesso - RECENTE),
       orderBy('inizio'),
     );
 
@@ -56,7 +73,22 @@ export function useElenco() {
     );
   }, [adesso]);
 
-  return { attivita, errore, daCache };
+  return { attivita, errore, daCache, adesso };
+}
+
+// Scarica in anticipo i dati di dettaglio delle attività a cui partecipo, così da poterli mostrare anche offline
+export function useScaricoAnticipato(ids: string[]) {
+  const chiave = ids.join(',');
+
+  useEffect(() => {
+    for (const id of chiave.split(',').filter(Boolean)) {
+      getDocs(conPosto(id))
+        // Anche i nomi
+        .then((risultato) => risultato.docs.forEach((d) => void leggiNome(d.id)))
+        .catch(() => {});
+      getDocs(cronologiaDi(id)).catch(() => {});
+    }
+  }, [chiave]);
 }
 
 // Il mio stato in ciascuna attività dell'elenco
@@ -134,15 +166,13 @@ export function useAttivita(id: string) {
 export function usePartecipanti(id: string) {
   const [partecipanti, setPartecipanti] = useState<PartecipanteConUid[]>([]);
 
-  useEffect(() => {
-    const conPosto = query(
-      collection(db, COLLEZIONI.attivita, id, SOTTOCOLLEZIONI.partecipanti),
-      where('stato', 'in', ['confermato', 'da_confermare']),
-    );
-    return onSnapshot(conPosto, (risultato) =>
-      setPartecipanti(risultato.docs.map((d) => ({ uid: d.id, ...(d.data() as Partecipante) }))),
-    );
-  }, [id]);
+  useEffect(
+    () =>
+      onSnapshot(conPosto(id), (risultato) =>
+        setPartecipanti(risultato.docs.map((d) => ({ uid: d.id, ...(d.data() as Partecipante) }))),
+      ),
+    [id],
+  );
 
   return partecipanti;
 }
@@ -201,16 +231,14 @@ function mioStato(mio: Partecipante | null | undefined, coda: { posizione: numbe
 export function useCronologia(id: string) {
   const [eventi, setEventi] = useState<EventoConId[]>([]);
 
-  useEffect(() => {
-    const dellAttivita = query(
-      collection(db, COLLEZIONI.attivita, id, SOTTOCOLLEZIONI.eventi),
-      where('tipo', 'in', ['creata', 'modificata', 'annullata']),
-    );
-    return onSnapshot(dellAttivita, (risultato) => {
-      const letti = risultato.docs.map((d) => ({ id: d.id, ...(d.data() as Evento) }));
-      setEventi(letti.sort((a, b) => a.versione - b.versione));
-    });
-  }, [id]);
+  useEffect(
+    () =>
+      onSnapshot(cronologiaDi(id), (risultato) => {
+        const letti = risultato.docs.map((d) => ({ id: d.id, ...(d.data() as Evento) }));
+        setEventi(letti.sort((a, b) => a.versione - b.versione));
+      }),
+    [id],
+  );
 
   return eventi;
 }

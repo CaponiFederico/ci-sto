@@ -8,9 +8,10 @@ interface Proprieta {
   attivita: AttivitaConId;
   mioStato?: StatoPartecipante;
   sospesa?: StatoSospesa;
+  cominciata?: boolean;
 }
 
-export function Scheda({ attivita, mioStato, sospesa }: Proprieta) {
+export function Scheda({ attivita, mioStato, sospesa, cominciata = false }: Proprieta) {
   const utente = useUtente();
   const annullata = attivita.stato === 'annullata';
   const organizzo = attivita.organizzatore === utente.uid;
@@ -20,6 +21,7 @@ export function Scheda({ attivita, mioStato, sospesa }: Proprieta) {
       <p className="etichette">
         <span className="etichetta">{CATEGORIA[attivita.categoria]}</span>
         {organizzo && <span className="etichetta">Organizzata da te</span>}
+        {cominciata && !annullata && <span className="etichetta">Già cominciata</span>}
         {mioStato && !organizzo && !annullata && (
           <span className={mioStato === 'da_confermare' ? 'etichetta evidenza' : 'etichetta'}>
             {MIO_STATO[mioStato]}
