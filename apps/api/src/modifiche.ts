@@ -2,11 +2,11 @@ import {
   COLLEZIONI,
   SOTTOCOLLEZIONI,
   entitaModifica,
-  stessoLuogo,
   type Attivita,
   type EsitoAnnullamento,
   type EsitoModifica,
   type Evento,
+  type Luogo,
   type MotivoRifiutoModifica,
   type Partecipante,
 } from 'modello';
@@ -18,6 +18,11 @@ import { promuovi, scadenzaRiconferma, applicaScadenze } from './riconferme.js';
 // La regola minore/maggiore sta nel modello
 // la usa anche il browser per avvisare prima dell'invio
 export { entitaModifica, stessoLuogo, SOGLIA_MINUTI } from 'modello';
+
+// Confronta due luoghi per decidere se sono identici
+function luogoIdentico(a: Luogo, b: Luogo) {
+  return a.testo === b.testo && a.civico === b.civico && a.nome === b.nome && a.lat === b.lat && a.lon === b.lon;
+}
 
 function rifiutato(motivo: MotivoRifiutoModifica): EsitoModifica {
   return { esito: 'rifiutato', motivo };
@@ -53,7 +58,7 @@ export async function modificaAttivita(
 
     // Solo ciò che cambia davvero: ripetere la stessa modifica non crea una versione nuova.
     const campi = (Object.keys(modifica) as (keyof Modifica)[]).filter((c) =>
-      c === 'luogo' ? !stessoLuogo(modifica.luogo!, attivita.luogo) : modifica[c] !== attivita[c],
+      c === 'luogo' ? !luogoIdentico(modifica.luogo!, attivita.luogo) : modifica[c] !== attivita[c],
     );
     if (campi.length === 0) return { esito: 'invariata', versione: attivita.versione };
 

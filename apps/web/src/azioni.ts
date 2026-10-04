@@ -2,12 +2,18 @@ import type {
   EsitoAnnullamento,
   EsitoIscrizione,
   EsitoModifica,
+  EsitoRicerca,
   EsitoRiconferma,
   EsitoUscita,
   NuovaAttivita,
   StatoIscrizione,
 } from 'modello';
 import { chiamaApi } from './api';
+
+// La ricerca passa dall'APi
+export function cercaLuoghi(q: string) {
+  return chiamaApi<EsitoRicerca>(`/v1/luoghi?q=${encodeURIComponent(q)}`);
+}
 
 // Ogni scrittura passa dall'API
 export function creaAttivita(nuova: NuovaAttivita) {

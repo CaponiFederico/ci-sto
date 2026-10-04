@@ -33,12 +33,17 @@ function intero(valore: unknown, minimo: number, massimo: number) {
 
 function luogo(valore: unknown): Luogo | null {
   if (typeof valore !== 'object' || valore === null) return null;
-  const { testo: t, nome, lat, lon } = valore as Record<string, unknown>;
+  const { testo: t, civico, nome, lat, lon } = valore as Record<string, unknown>;
 
   const descrizione = testo(t, LUNGHEZZA_MASSIMA.luogo);
   if (descrizione === null) return null;
 
   const risultato: Luogo = { testo: descrizione };
+  if (civico !== undefined) {
+    const c = testo(civico, LUNGHEZZA_MASSIMA.civico);
+    if (c === null) return null;
+    risultato.civico = c;
+  }
   if (nome !== undefined) {
     const n = testo(nome, 300);
     if (n === null) return null;

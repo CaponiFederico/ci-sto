@@ -17,6 +17,7 @@ import {
   type MotivoRifiutoModifica,
   type MotivoRifiutoRiconferma,
   type MotivoRifiutoUscita,
+  type Luogo,
   type PoliticaCoda,
   type StatoPartecipante,
 } from 'modello';
@@ -89,6 +90,29 @@ export const ERRORE_CAMPO: Record<Campo, string> = {
   luogo: `Indica dove ci si trova, al massimo ${LUNGHEZZA_MASSIMA.luogo} caratteri.`,
   capacita: `I posti vanno da ${CAPACITA_MINIMA} a ${CAPACITA_MASSIMA}, te compreso.`,
   politicaCoda: 'Scegli come funziona la lista d’attesa.',
+};
+
+export function indirizzo(luogo: Luogo) {
+  const { nome, civico } = luogo;
+  if (!nome) return civico ? `Civico ${civico}` : null;
+  return civico && !nome.split(', ').includes(civico) ? `${nome} (civico ${civico})` : nome;
+}
+
+// Apre il navigatore sul punto
+export function apriNelleMappe(lat: number, lon: number) {
+  return `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
+}
+
+export const MAPPA = {
+  corta: 'Almeno 3 caratteri,',
+  nessuno: 'Nessun risultato. Prova a scriverlo in un altro modo, oppure pubblica senza indirizzo.',
+  nonDisponibile: 'La ricerca non è disponibile in questo momento: puoi pubblicare lo stesso.',
+  rinominato: 'Hai cambiato il luogo: se è un altro posto, cerca il nuovo indirizzo o togli questo.',
+  attribuzione: 'Risultati © OpenStreetMap',
+  aiutoLuogo: 'Il nome con cui lo conosce chi ci va: «Aula A1», «Campi da calcetto CUS».',
+  aiutoIndirizzo:
+    'L’indirizzo reale per rendere il luogo facilmente raggiungibile: «Via Roma 1, Torino», «Piazza del Duomo, Milano».',
+  indicativa: 'La posizione sulla mappa è indicativa: può non coincidere con l’ingresso o con il civico.',
 };
 
 const NOME_CAMPO: Record<Campo, string> = {

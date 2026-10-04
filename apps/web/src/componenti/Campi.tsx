@@ -10,6 +10,7 @@ import {
 } from 'modello';
 import type { Campo, Valori } from '../modulo';
 import { CATEGORIA, ERRORE_CAMPO, POLITICA } from '../testi';
+import { CampoLuogo } from './Luogo';
 
 // Campi di un modulo di creazione o modifica di un evento
 interface Proprieta {
@@ -78,11 +79,7 @@ export function Campi({ valori, errori, politicaBloccata = false }: Proprieta) {
         </label>
       </div>
 
-      <label>
-        Luogo
-        <input name="luogo" aria-invalid={sbagliato('luogo')} defaultValue={valori.luogo} required maxLength={LUNGHEZZA_MASSIMA.luogo} />
-        {errore('luogo')}
-      </label>
+      <CampoLuogo valori={valori} sbagliato={sbagliato('luogo')} errore={errore('luogo')} />
 
       <label>
         Posti, te compreso

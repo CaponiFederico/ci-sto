@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Iscrizione } from '../componenti/Iscrizione';
+import { Mappa } from '../componenti/Mappa';
 import { Nome } from '../componenti/Nome';
 import { Salvati } from '../componenti/Salvati';
 import { useAttivita, useCronologia, usePartecipanti, type AttivitaConId } from '../dati';
 import { useUtente } from '../sessione';
-import { CATEGORIA, POLITICA, posti, quando, voceCronologia } from '../testi';
+import { apriNelleMappe, CATEGORIA, indirizzo, POLITICA, posti, quando, voceCronologia } from '../testi';
 
 export function Dettaglio({ id }: { id: string }) {
   const { attivita, errore, daCache } = useAttivita(id);
@@ -41,6 +42,7 @@ function Contenuto({ attivita }: { attivita: AttivitaConId }) {
   const annullata = attivita.stato === 'annullata';
   const cominciata = attivita.inizio <= adesso;
   const politica = POLITICA[attivita.politicaCoda];
+  const { nome, lat, lon } = attivita.luogo;
 
   // Prima chi organizza
   const conPosto = [...partecipanti].sort(
@@ -78,6 +80,23 @@ function Contenuto({ attivita }: { attivita: AttivitaConId }) {
         <dt>Dove</dt>
         <dd>{attivita.luogo.testo}</dd>
 
+        {indirizzo(attivita.luogo) && (
+          <>
+            <dt>Indirizzo</dt>
+            <dd>
+              {indirizzo(attivita.luogo)}
+              {lat !== undefined && lon !== undefined && (
+                <>
+                  {' · '}
+                  <a href={apriNelleMappe(lat, lon)} target="_blank" rel="noreferrer">
+                    Apri nelle mappe
+                  </a>
+                </>
+              )}
+            </dd>
+          </>
+        )}
+
         <dt>Organizza</dt>
         <dd>
           <Nome uid={attivita.organizzatore} />
@@ -94,6 +113,8 @@ function Contenuto({ attivita }: { attivita: AttivitaConId }) {
           {politica.nome}: a posti finiti entra per primo {politica.regola}
         </dd>
       </dl>
+
+      {lat !== undefined && lon !== undefined && <Mappa nome={nome ?? attivita.luogo.testo} lat={lat} lon={lon} />}
 
       <Iscrizione attivita={attivita} adesso={adesso} eventi={eventi} />
 

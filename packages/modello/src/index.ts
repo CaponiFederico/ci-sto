@@ -18,7 +18,7 @@ export const DURATA_MINIMA = 15;
 export const DURATA_MASSIMA = 24 * 60;
 
 // Li usano sia i controlli dell'API sia il modulo nel browser
-export const LUNGHEZZA_MASSIMA = { titolo: 120, descrizione: 2000, luogo: 200 } as const;
+export const LUNGHEZZA_MASSIMA = { titolo: 120, descrizione: 2000, luogo: 200, civico: 10 } as const;
 
 export type Categoria = 'sport' | 'studio' | 'trasporto' | 'svago' | 'altro';
 
@@ -40,6 +40,7 @@ export const POLITICHE: readonly PoliticaCoda[] = [
 
 export interface Luogo {
   testo: string;
+  civico?: string;
   nome?: string;
   lat?: number;
   lon?: number;

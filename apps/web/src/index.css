@@ -261,6 +261,54 @@ legend {
   color: var(--testo);
 }
 
+.cerca input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cerca .civico {
+  flex: 0 0 6rem;
+  min-width: 0;
+}
+
+.anteprima {
+  width: 100%;
+  height: 14rem;
+  margin-top: 1rem;
+  border: 1px solid var(--bordo);
+  border-radius: 0.5rem;
+}
+
+.mappa {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.cerca {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.5rem;
+}
+
+.cerca label {
+  flex: 1;
+  min-width: 12rem;
+}
+
+.risultati {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.risultati button {
+  width: 100%;
+  text-align: left;
+}
+
 .errore-campo {
   padding-left: 0.5rem;
   color: var(--testo);
