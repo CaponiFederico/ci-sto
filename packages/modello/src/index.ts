@@ -45,6 +45,17 @@ export interface Luogo {
   lon?: number;
 }
 
+// Un risultato della ricerca di un luogo
+export interface LuogoTrovato {
+  nome: string;
+  lat: number;
+  lon: number;
+}
+
+export const RICERCA_LUOGO = { minima: 3, massima: 200 } as const;
+
+export type EsitoRicerca = { esito: 'trovati'; luoghi: LuogoTrovato[] } | { esito: 'non_disponibile' };
+
 export interface Utente {
   email: string;
   nome: string;

@@ -4,6 +4,7 @@ import cors from 'cors';
 import express from 'express';
 import { creaAttivita, validaModifica, validaNuovaAttivita } from './attivita.js';
 import { esci, iscrivi, statoIscrizione } from './iscrizioni.js';
+import { cercaLuoghi } from './luoghi.js';
 import { annullaAttivita, modificaAttivita } from './modifiche.js';
 import { riconferma } from './riconferme.js';
 import {
@@ -14,7 +15,7 @@ import {
 } from './auth.js';
 import { auth } from './firebase.js';
 import { db } from './firestore.js';
-import { COLLEZIONI, type Utente } from 'modello';
+import { COLLEZIONI, RICERCA_LUOGO, type Utente } from 'modello';
 
 export const app = express();
 
@@ -113,6 +114,17 @@ app.post('/v1/attivita/:id/riconferma', richiediAutenticazione, richiediAteneo, 
 
 app.post('/v1/attivita/:id/annullamento', richiediAutenticazione, richiediAteneo, async (req, res) => {
   res.json(await annullaAttivita(req.params.id as string, (req as RichiestaAutenticata).token.uid));
+});
+
+// no autenticazione ma solo a chi appartiene all'ateneo
+app.get('/v1/luoghi', richiediAutenticazione, richiediAteneo, async (req, res) => {
+  const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+  if (q.length < RICERCA_LUOGO.minima || q.length > RICERCA_LUOGO.massima) {
+    res.status(400).json({ error: 'ricerca_non_valida' });
+    return;
+  }
+
+  res.json(await cercaLuoghi(q));
 });
 
 // Gestore d'errore: con meno di quattro parametri Express non lo invoca mai.
