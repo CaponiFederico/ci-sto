@@ -245,6 +245,12 @@ export interface Statistiche {
   // Quante volte ha partecipato con ciascun altro utente: una scrittura per persona a consolidamento.
   coPartecipanti: Record<string, number>;
 }
+export interface Notifica {
+  titolo: string;
+  testo: string;
+  indirizzo: string;
+  etichetta: string;
+}
 
 export interface Sottoscrizione {
   endpoint: string;
