@@ -25,6 +25,7 @@ import type { MioStato } from './dati';
 import type { Mostra, Ordine } from './filtri';
 import type { Campo } from './modulo';
 import type { Motivo } from './ordine';
+import type { StatoPosizione } from './posizione';
 import type { AzioneSospesa } from './sospese';
 
 export const CATEGORIA: Record<Categoria, string> = {
@@ -102,6 +103,20 @@ export function indirizzo(luogo: Luogo) {
 export function apriNelleMappe(lat: number, lon: number) {
   return `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
 }
+
+export function aDistanza(km: number) {
+  const metri = Math.max(50, Math.round((km * 1000) / 50) * 50);
+  if (metri < 1000) return `a ${metri} m`;
+  const decimo = Math.round(km * 10) / 10;
+  return `a ${decimo < 10 ? decimo.toFixed(1).replace('.', ',') : Math.round(km)} km`;
+}
+
+export const POSIZIONE: Record<Exclude<StatoPosizione, 'nota'>, string> = {
+  ignota: 'Quanto dista?',
+  in_corso: 'Rilevo la posizione…',
+  negata: 'Non hai concesso la posizione.',
+  non_disponibile: 'La posizione non è disponibile su questo dispositivo.',
+};
 
 export const MAPPA = {
   corta: 'Almeno 3 caratteri,',

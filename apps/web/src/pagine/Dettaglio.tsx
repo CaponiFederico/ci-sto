@@ -1,11 +1,13 @@
+import { distanzaKm } from 'modello';
 import { useState } from 'react';
 import { Iscrizione } from '../componenti/Iscrizione';
 import { Mappa } from '../componenti/Mappa';
 import { Nome } from '../componenti/Nome';
 import { Salvati } from '../componenti/Salvati';
 import { useAttivita, useCronologia, usePartecipanti, type AttivitaConId } from '../dati';
+import { usePosizione } from '../posizione';
 import { useUtente } from '../sessione';
-import { apriNelleMappe, CATEGORIA, indirizzo, POLITICA, posti, quando, voceCronologia } from '../testi';
+import { aDistanza, apriNelleMappe, CATEGORIA, indirizzo, POLITICA, POSIZIONE, posti, quando, voceCronologia } from '../testi';
 
 export function Dettaglio({ id }: { id: string }) {
   const { attivita, errore, daCache } = useAttivita(id);
@@ -43,6 +45,7 @@ function Contenuto({ attivita }: { attivita: AttivitaConId }) {
   const cominciata = attivita.inizio <= adesso;
   const politica = POLITICA[attivita.politicaCoda];
   const { nome, lat, lon } = attivita.luogo;
+  const posizione = usePosizione();
 
   // Prima chi organizza
   const conPosto = [...partecipanti].sort(
@@ -92,6 +95,23 @@ function Contenuto({ attivita }: { attivita: AttivitaConId }) {
                     Apri nelle mappe
                   </a>
                 </>
+              )}
+            </dd>
+          </>
+        )}
+
+        {lat !== undefined && lon !== undefined && (
+          <>
+            <dt>Distanza</dt>
+            <dd>
+              {posizione.punto ? (
+                `${aDistanza(distanzaKm(posizione.punto, { lat, lon }))} da te, in linea d’aria`
+              ) : posizione.stato === 'ignota' ? (
+                <button type="button" className="secondario" onClick={posizione.chiedi}>
+                  {POSIZIONE.ignota}
+                </button>
+              ) : (
+                <span role="status">{POSIZIONE[posizione.stato as keyof typeof POSIZIONE]}</span>
               )}
             </dd>
           </>

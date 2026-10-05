@@ -12,6 +12,7 @@ import { Elenco } from './pagine/Elenco';
 import { Modifica } from './pagine/Modifica';
 import { Nuova } from './pagine/Nuova';
 import { rotta, usePercorso } from './percorso';
+import { ContestoPosizione, useRilevaPosizione } from './posizione';
 import { useOnline } from './rete';
 import { ContestoUtente } from './sessione';
 import { togli } from './sospese';
@@ -143,6 +144,7 @@ function App() {
   const [accessoInCorso, setAccessoInCorso] = useState(false);
   const [errore, setErrore] = useState<string | null>(null);
   const online = useOnline();
+  const posizione = useRilevaPosizione();
 
   // Vale sia per l'accesso appena fatto sia per la sessione ripresa al ricaricamento.
   useEffect(
@@ -263,7 +265,9 @@ function App() {
       <main>
         {utente ? (
           <ContestoUtente value={utente}>
-            <Pagina />
+            <ContestoPosizione value={posizione}>
+              <Pagina />
+            </ContestoPosizione>
           </ContestoUtente>
         ) : (
           sessioneVerificata && (

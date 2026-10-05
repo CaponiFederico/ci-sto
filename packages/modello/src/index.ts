@@ -141,6 +141,21 @@ export const SOGLIA_MINUTI = 30;
 
 // Tempo per riconfermare dopo una modifica maggiore
 export const RICONFERMA_ORE = 24;
+export interface Punto {
+  lat: number;
+  lon: number;
+}
+
+// Distanza in linea d'aria fra due punti
+export function distanzaKm(a: Punto, b: Punto) {
+  const RAGGIO_TERRA = 6371;
+  const radianti = (gradi: number) => (gradi * Math.PI) / 180;
+  const dLat = radianti(b.lat - a.lat);
+  const dLon = radianti(b.lon - a.lon);
+  const h =
+    Math.sin(dLat / 2) ** 2 + Math.cos(radianti(a.lat)) * Math.cos(radianti(b.lat)) * Math.sin(dLon / 2) ** 2;
+  return 2 * RAGGIO_TERRA * Math.asin(Math.sqrt(h));
+}
 
 // Con le coordinate conta il punto
 export function stessoLuogo(a: Luogo, b: Luogo) {

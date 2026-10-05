@@ -1,7 +1,8 @@
-import type { StatoPartecipante } from 'modello';
+import { distanzaKm, type StatoPartecipante } from 'modello';
 import type { AttivitaConId } from '../dati';
+import { usePosizione } from '../posizione';
 import { useUtente } from '../sessione';
-import { CATEGORIA, ETICHETTA_SOSPESA, MIO_STATO, posti, quando, type StatoSospesa } from '../testi';
+import { aDistanza, CATEGORIA, ETICHETTA_SOSPESA, MIO_STATO, posti, quando, type StatoSospesa } from '../testi';
 import { Nome } from './Nome';
 
 interface Proprieta {
@@ -16,6 +17,9 @@ export function Scheda({ attivita, mioStato, sospesa, cominciata = false, motivo
   const utente = useUtente();
   const annullata = attivita.stato === 'annullata';
   const organizzo = attivita.organizzatore === utente.uid;
+  const { punto } = usePosizione();
+  const { lat, lon } = attivita.luogo;
+  const distanza = punto && lat !== undefined && lon !== undefined ? distanzaKm(punto, { lat, lon }) : null;
 
   return (
     <article className={annullata ? 'scheda annullata' : 'scheda'}>
@@ -45,6 +49,7 @@ export function Scheda({ attivita, mioStato, sospesa, cominciata = false, motivo
         {attivita.durataMinuti} min
         {' · '}
         {attivita.luogo.testo}
+        {distanza !== null && ` (${aDistanza(distanza)})`}
         {' · '}
         <Nome uid={attivita.organizzatore} />
       </p>
