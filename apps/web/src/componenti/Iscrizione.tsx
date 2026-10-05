@@ -2,6 +2,7 @@ import type { Evento } from 'modello';
 import { useActionState } from 'react';
 import { ErroreApi } from '../api';
 import { iscrivi, lascia, riconferma } from '../azioni';
+import { useNotifiche } from '../stato-notifiche';
 import { useMioStato, useSospese, type AttivitaConId } from '../dati';
 import { useUtente } from '../sessione';
 import { metti, togli, type AzioneSospesa } from '../sospese';
@@ -11,6 +12,7 @@ import {
   avvisoUscita,
   cambiataDa,
   descriviIscrizione,
+  NOTIFICHE,
   SOSPESA,
 } from '../testi';
 
@@ -23,6 +25,7 @@ interface Proprieta {
 
 export function Iscrizione({ attivita, adesso, eventi }: Proprieta) {
   const utente = useUtente();
+  const notifiche = useNotifiche();
   const { stato, errore } = useMioStato(attivita, utente.uid);
   const sospesa = useSospese(utente.uid).find((s) => s.idAttivita === attivita.id);
 
@@ -58,12 +61,26 @@ export function Iscrizione({ attivita, adesso, eventi }: Proprieta) {
     }
   }, null);
 
+  const proposta = notifiche.stato === 'spente' && (
+    <p className="nota">
+      {NOTIFICHE.proposta}{' '}
+      <button type="button" className="secondario" disabled={notifiche.inCorso} onClick={notifiche.attiva}>
+        {NOTIFICHE.attiva}
+      </button>
+    </p>
+  );
+
   if (attivita.stato === 'annullata') return <p className="stato">L’attività è stata annullata.</p>;
   if (attivita.inizio <= adesso) {
     return <p className="stato">L’attività è già cominciata: le iscrizioni sono chiuse.</p>;
   }
   if (attivita.organizzatore === utente.uid) {
-    return <p className="stato">Organizzi questa attività: un posto è tuo.</p>;
+    return (
+      <div className="stato">
+        <p>Organizzi questa attività: un posto è tuo.</p>
+        {proposta}
+      </div>
+    );
   }
   // richiesta in coda
   if (sospesa) {
@@ -128,6 +145,7 @@ export function Iscrizione({ attivita, adesso, eventi }: Proprieta) {
           {avviso}
         </p>
       )}
+      {stato.stato !== 'non_iscritto' && proposta}
     </form>
   );
 }

@@ -9,10 +9,11 @@ import {
   type Partecipante,
   type StatoIscrizione,
 } from 'modello';
+import type { Avvisa, Avviso } from './avvisi.js';
 import { leggiCoda } from './coda.js';
 import { POLITICA, type Contesto } from './politiche.js';
 import { db, ID_ATTIVITA, TENTATIVI } from './firestore.js';
-import { promuovi, applicaScadenze } from './riconferme.js';
+import { promuovi, applicaScadenze, scadenzaRiconferma } from './riconferme.js';
 
 const VUOTO: Contesto = { presenti: [], statistiche: new Map(), adesso: 0 };
 
@@ -26,6 +27,7 @@ export async function iscrivi(
   uid: string,
   orologio: () => number = Date.now,
   versioneVista?: number,
+  avvisa?: Avvisa,
 ): Promise<EsitoIscrizione> {
   if (!ID_ATTIVITA.test(idAttivita)) return rifiutato('inesistente');
   // Un posto non riconfermato in tempo è libero
@@ -33,8 +35,10 @@ export async function iscrivi(
   const attivitaRif = db.collection(COLLEZIONI.attivita).doc(idAttivita);
   const partecipanti = attivitaRif.collection(SOTTOCOLLEZIONI.partecipanti);
   const partecipanteRif = partecipanti.doc(uid);
+  let avvisi: Avviso[] = [];
 
-  return db.runTransaction(async (tx) => {
+  const esito = await db.runTransaction(async (tx): Promise<EsitoIscrizione> => {
+    avvisi = [];
     // Letto a ogni tentativo
     const adesso = orologio();
 
@@ -103,6 +107,13 @@ export async function iscrivi(
 
     tx.set(partecipanteRif, partecipante);
     tx.set(attivitaRif.collection(SOTTOCOLLEZIONI.eventi).doc(), evento);
+    avvisi.push({
+      a: attivita.organizzatore,
+      tipo: confermato ? 'iscritto' : 'in_lista',
+      attivita: idAttivita,
+      titolo: attivita.titolo,
+      chi: uid,
+    });
 
     // Due ingressi simultanei vanno in conflitto.
     if (!confermato) {
@@ -118,6 +129,9 @@ export async function iscrivi(
 
     return { esito: 'confermato' };
   }, { maxAttempts: TENTATIVI });
+
+  avvisa?.(avvisi);
+  return esito;
 }
 
 // Sola lettura
@@ -150,6 +164,7 @@ export async function esci(
   idAttivita: string,
   uid: string,
   orologio: () => number = Date.now,
+  avvisa?: Avvisa,
 ): Promise<EsitoUscita> {
   if (!ID_ATTIVITA.test(idAttivita)) return { esito: 'non_iscritto' };
   await applicaScadenze(idAttivita, orologio);
@@ -157,8 +172,10 @@ export async function esci(
   const partecipanti = attivitaRif.collection(SOTTOCOLLEZIONI.partecipanti);
   const partecipanteRif = partecipanti.doc(uid);
   const eventi = attivitaRif.collection(SOTTOCOLLEZIONI.eventi);
+  let avvisi: Avviso[] = [];
 
-  return db.runTransaction(async (tx) => {
+  const esito = await db.runTransaction(async (tx): Promise<EsitoUscita> => {
+    avvisi = [];
     const adesso = orologio();
 
     const attivitaDoc = await tx.get(attivitaRif);
@@ -192,9 +209,18 @@ export async function esci(
       return { esito: 'uscito', promosso: null };
     }
 
+    const comune = { attivita: idAttivita, titolo: attivita.titolo };
+    avvisi.push({ ...comune, a: attivita.organizzatore, tipo: 'uscito', chi: uid });
+
     // Il posto passa al primo in coda
     if (primo) {
       const primoDaConfermare = promuovi(tx, eventi, primo, attivita, adesso);
+      avvisi.push({
+        ...comune,
+        a: primo.id,
+        tipo: 'promosso',
+        ...(primoDaConfermare && { entro: scadenzaRiconferma(adesso, attivita.inizio) }),
+      });
       tx.update(attivitaRif, {
         daConfermare: daConfermare + (primoDaConfermare ? 1 : 0),
         inAttesa: attivita.inAttesa - 1,
@@ -209,4 +235,7 @@ export async function esci(
     } satisfies Partial<Attivita>);
     return { esito: 'uscito', promosso: null };
   }, { maxAttempts: TENTATIVI });
+
+  avvisa?.(avvisi);
+  return esito;
 }

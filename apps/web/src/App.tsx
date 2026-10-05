@@ -2,6 +2,7 @@ import { onAuthStateChanged, type User } from 'firebase/auth';
 import { useActionState, useEffect, useState, type FormEvent } from 'react';
 import { ErroreApi } from './api';
 import { accediConGoogle, accediConPassword, apriSessione, esci, sessioneRicordata } from './auth';
+import { ContestoNotifiche, useGestisciNotifiche } from './stato-notifiche';
 import { Conferma, type Domanda } from './componenti/Conferma';
 import { Notifiche } from './componenti/Notifiche';
 import { FILTRI_INIZIALI } from './filtri';
@@ -156,6 +157,7 @@ function App() {
   const [accessoInCorso, setAccessoInCorso] = useState(false);
   const [errore, setErrore] = useState<string | null>(null);
   const online = useOnline();
+  const notifiche = useGestisciNotifiche(utente?.uid ?? null);
 
   // Vale sia per l'accesso appena fatto sia per la sessione ripresa al ricaricamento.
   useEffect(
@@ -207,7 +209,7 @@ function App() {
   }
 
   return (
-    <>
+    <ContestoNotifiche value={notifiche}>
       <header>
         <h1>
           <a href="#/">Bacheca</a>
@@ -270,7 +272,7 @@ function App() {
           </p>
         )}
 
-        {utente && <Notifiche uid={utente.uid} />}
+        {utente && <Notifiche />}
         {utente && <InSospeso uid={utente.uid} online={online} />}
       </header>
 
@@ -285,7 +287,7 @@ function App() {
           )
         )}
       </main>
-    </>
+    </ContestoNotifiche>
   );
 }
 

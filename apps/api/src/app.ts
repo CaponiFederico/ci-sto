@@ -3,6 +3,7 @@ import './ambiente.js';
 import cors from 'cors';
 import express from 'express';
 import { creaAttivita, validaModifica, validaNuovaAttivita } from './attivita.js';
+import { mandaAvvisi, type Avviso } from './avvisi.js';
 import { esci, iscrivi, statoIscrizione } from './iscrizioni.js';
 import { cercaLuoghi, indirizzoDi } from './luoghi.js';
 import { invia } from './push.js';
@@ -98,7 +99,9 @@ app.post('/v1/attivita/:id/iscrizione', richiediAutenticazione, richiediAteneo, 
   const versioneVista = Number.isInteger(vista) ? (vista as number) : undefined;
 
   const uid = (req as RichiestaAutenticata).token.uid;
-  res.json(await iscrivi(req.params.id as string, uid, Date.now, versioneVista));
+  const avvisi: Avviso[] = [];
+  res.json(await iscrivi(req.params.id as string, uid, Date.now, versioneVista, (a) => avvisi.push(...a)));
+  void mandaAvvisi(avvisi);
 });
 
 app.get('/v1/attivita/:id/iscrizione', richiediAutenticazione, richiediAteneo, async (req, res) => {
@@ -106,7 +109,10 @@ app.get('/v1/attivita/:id/iscrizione', richiediAutenticazione, richiediAteneo, a
 });
 
 app.delete('/v1/attivita/:id/iscrizione', richiediAutenticazione, richiediAteneo, async (req, res) => {
-  res.json(await esci(req.params.id as string, (req as RichiestaAutenticata).token.uid));
+  const avvisi: Avviso[] = [];
+  const uid = (req as RichiestaAutenticata).token.uid;
+  res.json(await esci(req.params.id as string, uid, Date.now, (a) => avvisi.push(...a)));
+  void mandaAvvisi(avvisi);
 });
 
 app.post('/v1/attivita/:id/riconferma', richiediAutenticazione, richiediAteneo, async (req, res) => {

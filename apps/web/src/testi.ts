@@ -145,6 +145,7 @@ export const VICINE = {
 
 export const NOTIFICHE = {
   attiva: 'Attiva le notifiche',
+  proposta: 'Vuoi essere avvisato se qui cambia qualcosa?',
   attive: 'Notifiche attive su questo dispositivo.',
   disattiva: 'Disattiva',
   prova: 'Mandane una di prova',
