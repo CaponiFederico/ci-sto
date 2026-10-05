@@ -141,6 +141,8 @@ export const SOGLIA_MINUTI = 30;
 
 // Tempo per riconfermare dopo una modifica maggiore
 export const RICONFERMA_ORE = 24;
+export const RAGGIO_VICINO_KM = 2;
+
 export interface Punto {
   lat: number;
   lon: number;

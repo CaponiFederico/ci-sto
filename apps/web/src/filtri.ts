@@ -1,7 +1,7 @@
-import type { Categoria, StatoPartecipante } from 'modello';
+import { distanzaKm, RAGGIO_VICINO_KM, type Categoria, type Punto, type StatoPartecipante } from 'modello';
 import type { AttivitaConId } from './dati';
 
-export type Mostra = 'tutte' | 'mie' | 'organizzo' | 'libere';
+export type Mostra = 'tutte' | 'mie' | 'organizzo' | 'libere' | 'vicine';
 
 // Per te
 export type Ordine = 'per_te' | 'data';
@@ -18,7 +18,14 @@ export const FILTRI_INIZIALI: Filtri = { categoria: 'tutte', mostra: 'tutte', or
 export type MieiStati = Record<string, StatoPartecipante | undefined>;
 
 // Si filtra sui documenti già scaricati
-export function filtra(elenco: AttivitaConId[], filtri: Filtri, uid: string, stati: MieiStati, adesso: number) {
+export function filtra(
+  elenco: AttivitaConId[],
+  filtri: Filtri,
+  uid: string,
+  stati: MieiStati,
+  adesso: number,
+  punto: Punto | null,
+) {
   return elenco.filter((a) => {
     if (filtri.categoria !== 'tutte' && a.categoria !== filtri.categoria) return false;
 
@@ -31,6 +38,12 @@ export function filtra(elenco: AttivitaConId[], filtri: Filtri, uid: string, sta
         return a.organizzatore === uid;
       case 'libere':
         return a.stato !== 'annullata' && a.inizio > adesso && a.postiOccupati < a.capacita;
+      case 'vicine': {
+        // Senza la mia posizione o senza l'indirizzo dell'attività la distanza non esiste
+        const { lat, lon } = a.luogo;
+        if (punto === null || lat === undefined || lon === undefined) return false;
+        return distanzaKm(punto, { lat, lon }) <= RAGGIO_VICINO_KM;
+      }
     }
   });
 }

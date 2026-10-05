@@ -78,6 +78,17 @@ function Pagina() {
   }
 }
 
+// Vive solo a sessione aperta
+function Dentro() {
+  const posizione = useRilevaPosizione();
+
+  return (
+    <ContestoPosizione value={posizione}>
+      <Pagina />
+    </ContestoPosizione>
+  );
+}
+
 // fa partire la coda e mostra che cosa è ancora aperto
 function InSospeso({ uid, online }: { uid: string; online: boolean }) {
   const sospese = useSospese(uid);
@@ -144,7 +155,6 @@ function App() {
   const [accessoInCorso, setAccessoInCorso] = useState(false);
   const [errore, setErrore] = useState<string | null>(null);
   const online = useOnline();
-  const posizione = useRilevaPosizione();
 
   // Vale sia per l'accesso appena fatto sia per la sessione ripresa al ricaricamento.
   useEffect(
@@ -265,9 +275,7 @@ function App() {
       <main>
         {utente ? (
           <ContestoUtente value={utente}>
-            <ContestoPosizione value={posizione}>
-              <Pagina />
-            </ContestoPosizione>
+            <Dentro />
           </ContestoUtente>
         ) : (
           sessioneVerificata && (

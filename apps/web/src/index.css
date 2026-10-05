@@ -279,6 +279,30 @@ legend {
   border-radius: 0.5rem;
 }
 
+.posizione {
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  color: var(--testo-tenue);
+}
+
+.posizione summary {
+  cursor: pointer;
+}
+
+.posizione[open] {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.posizione > button {
+  justify-self: start;
+}
+
+.a-mano[open] {
+  display: grid;
+  gap: 0.5rem;
+}
+
 .mappa {
   display: grid;
   gap: 0.5rem;

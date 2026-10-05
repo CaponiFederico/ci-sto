@@ -1,4 +1,5 @@
 import { CATEGORIE } from 'modello';
+import { MiaPosizione } from '../componenti/MiaPosizione';
 import { Salvati } from '../componenti/Salvati';
 import { Scheda } from '../componenti/Scheda';
 import {
@@ -11,8 +12,9 @@ import {
 } from '../dati';
 import { filtra, FILTRI_INIZIALI, type Filtri } from '../filtri';
 import { ordina, type Valutata } from '../ordine';
+import { usePosizione } from '../posizione';
 import { useUtente } from '../sessione';
-import { CATEGORIA, MOSTRA, motivoOrdine, ORDINE, SENZA_STORICO, type StatoSospesa } from '../testi';
+import { CATEGORIA, MOSTRA, motivoOrdine, ORDINE, SENZA_STORICO, VICINE, type StatoSospesa } from '../testi';
 
 interface Proprieta {
   filtri: Filtri;
@@ -39,7 +41,9 @@ export function Elenco({ filtri, cambiaFiltri }: Proprieta) {
     return trovata.rifiuto.cambiata ? 'cambiata' : 'rifiutata';
   }
 
-  const visibili = attivita ? filtra(attivita, filtri, utente.uid, stati, adesso) : [];
+  const posizione = usePosizione();
+  const vicine = filtri.mostra === 'vicine';
+  const visibili = attivita ? filtra(attivita, filtri, utente.uid, stati, adesso, posizione.punto) : [];
   // L'ordine è calcolato qui, sui documenti già scaricati
   // senza storico coincide con quello per data
   const personale = filtri.ordine === 'per_te';
@@ -79,7 +83,11 @@ export function Elenco({ filtri, cambiaFiltri }: Proprieta) {
           Mostra
           <select
             value={filtri.mostra}
-            onChange={(e) => cambiaFiltri({ ...filtri, mostra: e.target.value as Filtri['mostra'] })}
+            onChange={(e) => {
+              const mostra = e.target.value as Filtri['mostra'];
+              if (mostra === 'vicine' && posizione.stato === 'ignota') posizione.chiedi();
+              cambiaFiltri({ ...filtri, mostra });
+            }}
           >
             {Object.entries(MOSTRA).map(([valore, etichetta]) => (
               <option key={valore} value={valore}>
@@ -103,6 +111,13 @@ export function Elenco({ filtri, cambiaFiltri }: Proprieta) {
           </select>
         </label>
       </div>
+
+      <MiaPosizione aperta={vicine && !posizione.punto} />
+      {vicine && (
+        <p className="nota" role="status">
+          {posizione.punto ? VICINE.nota : VICINE.senza}
+        </p>
+      )}
 
       {errore ? (
         <p className="errore" role="alert">

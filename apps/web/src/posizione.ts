@@ -1,4 +1,4 @@
-import type { Punto } from 'modello';
+import type { LuogoTrovato, Punto } from 'modello';
 import { createContext, use, useEffect, useState } from 'react';
 
 // ignota: non si sa ancora nulla
@@ -12,6 +12,24 @@ export interface Posizione {
   punto: Punto | null;
   stato: StatoPosizione;
   chiedi: () => void;
+  aMano: LuogoTrovato | null;
+  scegli: (luogo: LuogoTrovato | null) => void;
+}
+
+const RICORDO = 'bacheca:posizione';
+
+function ricordata(): LuogoTrovato | null {
+  try {
+    const letta = JSON.parse(localStorage.getItem(RICORDO) ?? 'null') as Partial<LuogoTrovato> | null;
+    const valida = typeof letta?.nome === 'string' && Number.isFinite(letta.lat) && Number.isFinite(letta.lon);
+    return valida ? (letta as LuogoTrovato) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function dimenticaPosizione() {
+  localStorage.removeItem(RICORDO);
 }
 
 // La posizione di chi guarda resta in memoria nel browser
@@ -41,17 +59,30 @@ function rileva(trovata: (punto: Punto) => void, esito: (stato: StatoPosizione) 
 }
 
 export function useRilevaPosizione(): Posizione {
-  const [punto, setPunto] = useState<Punto | null>(null);
+  const [rilevata, setRilevata] = useState<Punto | null>(null);
   const [stato, setStato] = useState<StatoPosizione>('ignota');
+  const [aMano, setAMano] = useState(ricordata);
 
   useEffect(() => {
     navigator.permissions
       ?.query({ name: 'geolocation' })
       .then((permesso) => {
-        if (permesso.state === 'granted') rileva(setPunto, setStato);
+        if (permesso.state === 'granted') rileva(setRilevata, setStato);
       })
       .catch(() => {});
   }, []);
 
-  return { punto, stato, chiedi: () => rileva(setPunto, setStato) };
+  function scegli(luogo: LuogoTrovato | null) {
+    if (luogo) localStorage.setItem(RICORDO, JSON.stringify(luogo));
+    else dimenticaPosizione();
+    setAMano(luogo);
+  }
+
+  return {
+    punto: aMano ?? rilevata,
+    stato: aMano ? 'nota' : stato,
+    chiedi: () => rileva(setRilevata, setStato),
+    aMano,
+    scegli,
+  };
 }

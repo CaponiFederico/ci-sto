@@ -3,6 +3,7 @@ import {
   CAPACITA_MINIMA,
   DURATA_MINIMA,
   LUNGHEZZA_MASSIMA,
+  RAGGIO_VICINO_KM,
   type Attivita,
   type Categoria,
   RICONFERMA_ORE,
@@ -41,6 +42,7 @@ export const MOSTRA: Record<Mostra, string> = {
   mie: 'A cui partecipo',
   organizzo: 'Organizzate da me',
   libere: 'Con posti liberi',
+  vicine: `Vicino a me (entro ${RAGGIO_VICINO_KM} km)`,
 };
 
 export const ORDINE: Record<Ordine, string> = {
@@ -116,6 +118,24 @@ export const POSIZIONE: Record<Exclude<StatoPosizione, 'nota'>, string> = {
   in_corso: 'Rilevo la posizione…',
   negata: 'Non hai concesso la posizione.',
   non_disponibile: 'La posizione non è disponibile su questo dispositivo.',
+};
+
+export const MIA_POSIZIONE = {
+  titolo: 'La mia posizione',
+  assente: 'non impostata',
+  rilevata: 'dal dispositivo',
+  scelta: 'un indirizzo scelto',
+  aCosaServe:
+    'Serve per calcolare la distanza tra questo dispositivo e le attività. Puoi usare la posizione del dispositivo o scegliere un indirizzo.',
+  dalDispositivo: 'Uso la posizione del dispositivo.',
+  usa: 'Usa la posizione del dispositivo',
+  aMano: 'Non puoi o non vuoi usare la posizione del dispositivo?',
+  etichetta: 'Indirizzo da cui calcolare le distanze',
+};
+
+export const VICINE = {
+  senza: 'Per vedere le attività vicine serve la tua posizione: usa quella del dispositivo o scegli un indirizzo qui sotto.',
+  nota: `Solo le attività con un indirizzo, entro ${RAGGIO_VICINO_KM} km in linea d’aria.`,
 };
 
 export const MAPPA = {
