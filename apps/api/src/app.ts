@@ -4,7 +4,7 @@ import cors from 'cors';
 import express from 'express';
 import { creaAttivita, validaModifica, validaNuovaAttivita } from './attivita.js';
 import { esci, iscrivi, statoIscrizione } from './iscrizioni.js';
-import { cercaLuoghi } from './luoghi.js';
+import { cercaLuoghi, indirizzoDi } from './luoghi.js';
 import { annullaAttivita, modificaAttivita } from './modifiche.js';
 import { riconferma } from './riconferme.js';
 import {
@@ -125,6 +125,18 @@ app.get('/v1/luoghi', richiediAutenticazione, richiediAteneo, async (req, res) =
   }
 
   res.json(await cercaLuoghi(q));
+});
+
+// Da una posizione all'indirizzo
+app.get('/v1/luoghi/inverso', richiediAutenticazione, richiediAteneo, async (req, res) => {
+  const lat = typeof req.query.lat === 'string' && req.query.lat !== '' ? Number(req.query.lat) : NaN;
+  const lon = typeof req.query.lon === 'string' && req.query.lon !== '' ? Number(req.query.lon) : NaN;
+  if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) {
+    res.status(400).json({ error: 'posizione_non_valida' });
+    return;
+  }
+
+  res.json(await indirizzoDi(lat, lon));
 });
 
 // Gestore d'errore: con meno di quattro parametri Express non lo invoca mai.

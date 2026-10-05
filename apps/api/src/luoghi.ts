@@ -1,6 +1,6 @@
 import type { EsitoRicerca, LuogoTrovato } from 'modello';
 
-const NOMINATIM = 'https://nominatim.openstreetmap.org/search';
+const NOMINATIM = 'https://nominatim.openstreetmap.org';
 
 // Nominatim richiede un User-Agent che identifichi l'applicazione e un indirizzo di contatto1
 const USER_AGENT =
@@ -54,7 +54,7 @@ export function creaRicerca({
   let inAttesa = 0;
   let ultima = -Infinity;
 
-  async function chiedi(chiave: string): Promise<EsitoRicerca> {
+  async function chiedi(chiave: string, indirizzo: string, estrai: (dati: unknown) => LuogoTrovato[]): Promise<EsitoRicerca> {
     const pronti = cache.get(chiave);
     if (pronti) return { esito: 'trovati', luoghi: pronti };
 
@@ -62,23 +62,14 @@ export function creaRicerca({
     if (attesa > 0) await attendi(attesa);
     ultima = orologio();
 
-    const parametri = new URLSearchParams({
-      q: chiave,
-      format: 'jsonv2',
-      limit: '5',
-      countrycodes: 'it',
-      viewbox: PISA,
-      'accept-language': 'it',
-    });
-
     try {
-      const risposta = await chiama(`${NOMINATIM}?${parametri}`, {
+      const risposta = await chiama(indirizzo, {
         headers: { 'User-Agent': USER_AGENT },
         signal: AbortSignal.timeout(TEMPO_MASSIMO),
       });
       if (!risposta.ok) return { esito: 'non_disponibile' };
 
-      const luoghi = leggi(await risposta.json());
+      const luoghi = estrai(await risposta.json());
       cache.set(chiave, luoghi);
       if (cache.size > tettoCache) cache.delete(cache.keys().next().value!);
       return { esito: 'trovati', luoghi };
@@ -87,18 +78,45 @@ export function creaRicerca({
     }
   }
 
-  return async function cerca(q: string): Promise<EsitoRicerca> {
-    const chiave = normalizza(q);
+  // Ricerca e ricerca inversa passano dalla stessa coda
+  function inCoda(chiave: string, indirizzo: string, estrai: (dati: unknown) => LuogoTrovato[]): Promise<EsitoRicerca> {
     const pronti = cache.get(chiave);
-    if (pronti) return { esito: 'trovati', luoghi: pronti };
+    if (pronti) return Promise.resolve({ esito: 'trovati', luoghi: pronti });
 
-    if (inAttesa >= CODA_MASSIMA) return { esito: 'non_disponibile' };
+    if (inAttesa >= CODA_MASSIMA) return Promise.resolve({ esito: 'non_disponibile' });
 
     inAttesa += 1;
-    const mia = turno.then(() => chiedi(chiave)).finally(() => (inAttesa -= 1));
+    const mia = turno.then(() => chiedi(chiave, indirizzo, estrai)).finally(() => (inAttesa -= 1));
     turno = mia;
     return mia;
-  };
+  }
+
+  function cerca(q: string) {
+    const chiave = normalizza(q);
+    const parametri = new URLSearchParams({
+      q: chiave,
+      format: 'jsonv2',
+      limit: '5',
+      countrycodes: 'it',
+      viewbox: PISA,
+      'accept-language': 'it',
+    });
+    return inCoda(chiave, `${NOMINATIM}/search?${parametri}`, leggi);
+  }
+
+  function inverso(lat: number, lon: number) {
+    const punto = { lat: Number(lat.toFixed(4)), lon: Number(lon.toFixed(4)) };
+    const parametri = new URLSearchParams({
+      lat: String(punto.lat),
+      lon: String(punto.lon),
+      format: 'jsonv2',
+      'accept-language': 'it',
+    });
+    const estrai = (dati: unknown) => leggi([dati]).map((trovato) => ({ ...trovato, ...punto }));
+    return inCoda(`inverso:${punto.lat},${punto.lon}`, `${NOMINATIM}/reverse?${parametri}`, estrai);
+  }
+
+  return { cerca, inverso };
 }
 
-export const cercaLuoghi = creaRicerca();
+export const { cerca: cercaLuoghi, inverso: indirizzoDi } = creaRicerca();

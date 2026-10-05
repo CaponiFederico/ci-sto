@@ -128,12 +128,13 @@ apps/
     src/App.tsx           accesso e scelta della pagina
     src/percorso.ts       navigazione: l'indirizzo dopo # decide la pagina
     src/pagine/           elenco, nuova attività, dettaglio, modifica
-    src/componenti/       scheda, campi del modulo, iscrizione, conferma, nome
+    src/componenti/       scheda, campi del modulo, luogo e ricerca, mappa, posizione, iscrizione, conferma, nome
     src/dati.ts           letture da Firestore in tempo reale
     src/azioni.ts         scritture, sempre tramite l'API
     src/sospese.ts        richieste in sospeso, salvate su IndexedDB
     src/invio.ts          invio delle richieste in sospeso al ritorno della rete
     src/rete.ts           stato della connessione
+    src/posizione.ts      posizione di chi guarda: dal dispositivo o da un indirizzo scelto
     src/filtri.ts         filtri dell'elenco
     src/ordine.ts         ordine personale: pesi, punteggio, motivo
     src/testi.ts          messaggi per ogni stato ed esito
@@ -147,6 +148,7 @@ apps/
     src/coda.ts           ordine della lista d'attesa
     src/politiche.ts      le cinque politiche della lista d'attesa
     src/storico.ts        storico delle partecipazioni
+    src/luoghi.ts         ricerca degli indirizzi su Nominatim: cache e limite di richieste
 packages/
   modello/                tipi, costanti e regole condivise da web e api
 firebase.json             hosting, regole Firestore, emulatori
@@ -184,6 +186,40 @@ Il punteggio di un'attività è una somma di cinque segnali moltiplicati per un 
 Il calcolo avviene nel browser, sui documenti già scaricati.
 Pesi e soglie stanno in `apps/web/src/ordine.ts`.
 
+
+## Luogo, indirizzo e distanza
+
+Un'attività ha un luogo, il nome con cui lo conosce chi ci va («Aula A1», «Campi da calcetto
+CUS»), e un indirizzo. L'indirizzo si cerca dal modulo e si sceglie fra i risultati;
+il civico si può aggiungere a mano.
+
+La ricerca usa [Nominatim](https://nominatim.org/), il servizio di OpenStreetMap, in due modi:
+da un testo a un elenco di indirizzi, e dalla posizione di chi pubblica al suo indirizzo. Il browser
+non lo chiama mai direttamente: passa da `GET /v1/luoghi` e `GET /v1/luoghi/inverso`.
+
+Le regole del servizio sono riportate in operations.osmfoundation.org/policies/nominatim
+
+| Regola del servizio | Come è rispettata |
+|---|---|
+| al massimo una richiesta al secondo, per tutta l'applicazione | una coda nell'API: ogni richiesta parte dopo la precedente |
+| non ripetere la stessa richiesta | i risultati restano in memoria nell'API |
+| niente completamento automatico | la ricerca parte da un bottone, mai mentre si scrive |
+| identificarsi | ogni richiesta porta il nome dell'applicazione e l'indirizzo di questo repository |
+| attribuzione | «Risultati © OpenStreetMap» sotto l'elenco |
+
+Si cerca una volta sola, quando si pubblica o si cambia il luogo: nome e coordinate vengono salvati
+con l'attività, quindi leggere la bacheca non chiama nessun servizio esterno e funziona senza rete.
+
+Nel dettaglio compaiono l'indirizzo, il collegamento «Apri nelle mappe» e un riquadro con la mappa
+di openstreetmap.org. Il riquadro è la pagina di un altro sito: si vede solo con la rete, e la
+posizione che mostra è indicativa.
+
+La distanza si calcola nel browser, in linea d'aria, fra l'indirizzo dell'attività e la
+posizione di chi guarda. Quest'ultima si imposta da «La mia posizione»: è quella del dispositivo,
+chiesta solo quando serve, oppure un indirizzo scelto a mano.
+
+Cambiare il luogo di un'attività con iscritti è una modifica che chiede loro di riconfermare;
+aggiungere l'indirizzo senza cambiare il nome, no.
 
 ## Senza rete
 

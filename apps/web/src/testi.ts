@@ -149,6 +149,11 @@ export const MAPPA = {
   nonDisponibile: 'La ricerca non è disponibile in questo momento: puoi pubblicare lo stesso.',
   rinominato: 'Hai cambiato il luogo: se è un altro posto, cerca il nuovo indirizzo o togli questo.',
   attribuzione: 'Risultati © OpenStreetMap',
+  qui: 'Usa la mia posizione',
+  quiInCorso: 'Cerco l’indirizzo…',
+  quiNegata:
+    'Il browser non ha il permesso di usare la posizione. Concedilo dalle impostazioni del sito, accanto all’indirizzo della pagina, oppure cerca l’indirizzo scrivendolo.',
+  quiNessuno: 'Non trovo un indirizzo per questa posizione: prova a cercarlo scrivendolo.',
   aiutoLuogo: 'Il nome con cui lo conosce chi ci va: «Aula A1», «Campi da calcetto CUS».',
   aiutoIndirizzo:
     'L’indirizzo reale per rendere il luogo facilmente raggiungibile: «Via Roma 1, Torino», «Piazza del Duomo, Milano».',

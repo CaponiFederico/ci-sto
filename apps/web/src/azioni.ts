@@ -15,6 +15,11 @@ export function cercaLuoghi(q: string) {
   return chiamaApi<EsitoRicerca>(`/v1/luoghi?q=${encodeURIComponent(q)}`);
 }
 
+// Dalla posizione di chi pubblica all'indirizzo
+export function indirizzoDi(lat: number, lon: number) {
+  return chiamaApi<EsitoRicerca>(`/v1/luoghi/inverso?lat=${lat}&lon=${lon}`);
+}
+
 // Ogni scrittura passa dall'API
 export function creaAttivita(nuova: NuovaAttivita) {
   return chiamaApi<{ id: string }>('/v1/attivita', { method: 'POST', body: JSON.stringify(nuova) });

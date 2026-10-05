@@ -41,7 +41,7 @@ export function usePosizione() {
   return posizione;
 }
 
-function rileva(trovata: (punto: Punto) => void, esito: (stato: StatoPosizione) => void) {
+export function rileva(trovata: (punto: Punto) => void, esito: (stato: StatoPosizione) => void) {
   if (!('geolocation' in navigator)) {
     esito('non_disponibile');
     return;
