@@ -47,7 +47,7 @@ export function valuta(
   const quanti: Record<SegnalePersonale, number> = {
     persone: presenti.filter((altro) => altro !== uid && (insieme[altro] ?? 0) > 0).length,
     categoria: statistiche?.perCategoria[attivita.categoria] ?? 0,
-    luogo: statistiche?.perLuogo[chiaveLuogo(attivita.luogo.testo)] ?? 0,
+    luogo: statistiche?.perLuogo[chiaveLuogo(attivita.luogo)] ?? 0,
   };
 
   const giorni = Math.max(0, attivita.inizio - adesso) / GIORNO;

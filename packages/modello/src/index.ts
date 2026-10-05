@@ -210,9 +210,13 @@ export interface Evento {
   entita?: EntitaModifica;
 }
 
-// uniforma il testo
-export function chiaveLuogo(testo: string) {
-  return testo.trim().toLowerCase().replace(/\s+/g, ' ');
+// Lo stesso luogo deve dare la stessa chiave anche se scritto in modi diversi
+export function chiaveLuogo(luogo: Luogo) {
+  if (luogo.lat !== undefined && luogo.lon !== undefined) {
+    const intero = (gradi: number) => Math.round(gradi * 10000);
+    return `geo:${intero(luogo.lat)},${intero(luogo.lon)}`;
+  }
+  return luogo.testo.trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
 export interface Statistiche {

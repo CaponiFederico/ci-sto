@@ -59,7 +59,7 @@ export async function consolidaAttivita(
     const coinvolti = [...presenti, ...esclusi];
     const documenti = await tx.getAll(...coinvolti.map((uid) => statistiche.doc(uid)));
     const precedenti = new Map(documenti.map((d) => [d.id, d.exists ? (d.data() as Statistiche) : null]));
-    const luogo = chiaveLuogo(attivita.luogo.testo);
+    const luogo = chiaveLuogo(attivita.luogo);
 
     for (const uid of presenti) {
       const prima = precedenti.get(uid);
