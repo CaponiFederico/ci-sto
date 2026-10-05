@@ -14,7 +14,16 @@ import { filtra, FILTRI_INIZIALI, type Filtri } from '../filtri';
 import { ordina, type Valutata } from '../ordine';
 import { usePosizione } from '../posizione';
 import { useUtente } from '../sessione';
-import { CATEGORIA, MOSTRA, motivoOrdine, ORDINE, SENZA_STORICO, VICINE, type StatoSospesa } from '../testi';
+import {
+  CATEGORIA,
+  MOSTRA,
+  motivoOrdine,
+  ORDINE,
+  SENZA_POSIZIONE,
+  SENZA_STORICO,
+  VICINE,
+  type StatoSospesa,
+} from '../testi';
 
 interface Proprieta {
   filtri: Filtri;
@@ -48,10 +57,11 @@ export function Elenco({ filtri, cambiaFiltri }: Proprieta) {
   // senza storico coincide con quello per data
   const personale = filtri.ordine === 'per_te';
   const ordinate: Pick<Valutata, 'attivita' | 'motivo'>[] = personale
-    ? ordina(visibili, statistiche ?? null, presenti, utente.uid, adesso)
+    ? ordina(visibili, statistiche ?? null, presenti, utente.uid, adesso, posizione.punto)
     : visibili.map((a) => ({ attivita: a, motivo: null }));
   // Chi non ha mai partecipato vede l'ordine per data
   const senzaStorico = personale && statistiche !== undefined && (statistiche?.partecipazioni ?? 0) === 0;
+  const senzaPosizione = personale && !posizione.punto && visibili.some((a) => a.luogo.lat !== undefined);
   const filtrato = filtri.categoria !== 'tutte' || filtri.mostra !== 'tutte';
 
   return (
@@ -142,6 +152,7 @@ export function Elenco({ filtri, cambiaFiltri }: Proprieta) {
             </p>
           )}
           {senzaStorico && <p className="nota">{SENZA_STORICO}</p>}
+          {senzaPosizione && <p className="nota">{SENZA_POSIZIONE}</p>}
           <ul className="elenco">
             {ordinate.map(({ attivita: a, motivo }) => (
               <li key={a.id}>

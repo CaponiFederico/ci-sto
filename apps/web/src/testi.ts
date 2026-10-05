@@ -64,8 +64,13 @@ export function motivoOrdine(motivo: Motivo) {
         : `Hai già partecipato ${n} volte ad attività di questa categoria`;
     case 'luogo':
       return n === 1 ? 'Sei già stato qui 1 volta' : `Sei già stato qui ${n} volte`;
+    case 'vicinanza':
+      return `A${aDistanza(n).slice(1)} da te`;
   }
 }
+
+export const SENZA_POSIZIONE =
+  'L’ordine non tiene conto della distanza: per usarla imposta «La mia posizione» qui sopra.';
 
 export const SENZA_STORICO =
   'Non hai ancora partecipato a nessuna attività: per ora l’ordine è quello per data.';

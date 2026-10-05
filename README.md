@@ -171,13 +171,14 @@ ha il posto e chi va in lista d'attesa.
 
 Con «Ordina: Per te» ogni persona vede la bacheca con un ordionamento personale.
 
-Il punteggio di un'attività è una somma di quattro segnali moltiplicati per un peso:
+Il punteggio di un'attività è una somma di cinque segnali moltiplicati per un peso:
 
 | Segnale | Descrizone | Peso |
 |---|---|---|
 | persone | quante persone con cui si è già partecipato hanno il posto (fino a 3) | 3 |
 | categoria | quante volte si è partecipato ad attività di quella categoria (fino a 5) | 2 |
 | luogo | quante volte si è stati in quel luogo (fino a 5) | 1 |
+| vicinanza | quanto è vicina a chi guarda: 1 sul posto, 0 da 5 km in poi; conta solo se si è impostata la propria posizione | 2 |
 | imminenza | quanto è vicina: 1 se comincia adesso, 0 da 14 giorni in poi | 4 |
 
 Il calcolo avviene nel browser, sui documenti già scaricati.

@@ -1,14 +1,15 @@
-import { chiaveLuogo, type Statistiche } from 'modello';
+import { chiaveLuogo, distanzaKm, type Punto, type Statistiche } from 'modello';
 import type { AttivitaConId } from './dati';
 
 // peso dei segnali che fanno salire un'attività
-export const PESI = { persone: 3, categoria: 2, luogo: 1, imminenza: 4 } as const;
+export const PESI = { persone: 3, categoria: 2, luogo: 1, vicinanza: 2, imminenza: 4 } as const;
 
 // Oltre il tetto un segnale non cresce più
 export const TETTO_PERSONE = 3;
 export const TETTO_VOLTE = 5;
 // La finestra temporale in cui l'imminenza conta: oltre non fa più salire
 export const FINESTRA_GIORNI = 14;
+export const RAGGIO_KM = 5;
 
 const GIORNO = 24 * 60 * 60 * 1000;
 
@@ -19,7 +20,7 @@ type SegnalePersonale = Exclude<Segnale, 'imminenza'>;
 // Dipende da utente a utente
 export interface Motivo {
   segnale: SegnalePersonale;
-  // Persone conosciute, oppure volte in quella categoria o in quel luogo
+  // Persone conosciute, volte in quella categoria o in quel luogo, oppure chilometri di distanza
   quanti: number;
 }
 
@@ -40,14 +41,19 @@ export function valuta(
   presenti: string[],
   uid: string,
   adesso: number,
+  punto: Punto | null = null,
 ): Valutazione {
   const insieme = statistiche?.coPartecipanti ?? {};
+
+  const { lat, lon } = attivita.luogo;
+  const km = punto && lat !== undefined && lon !== undefined ? distanzaKm(punto, { lat, lon }) : null;
 
   // Contano le persone, non le volte
   const quanti: Record<SegnalePersonale, number> = {
     persone: presenti.filter((altro) => altro !== uid && (insieme[altro] ?? 0) > 0).length,
     categoria: statistiche?.perCategoria[attivita.categoria] ?? 0,
     luogo: statistiche?.perLuogo[chiaveLuogo(attivita.luogo)] ?? 0,
+    vicinanza: km ?? 0,
   };
 
   const giorni = Math.max(0, attivita.inizio - adesso) / GIORNO;
@@ -57,6 +63,8 @@ export function valuta(
     persone: Math.min(quanti.persone, TETTO_PERSONE) / TETTO_PERSONE,
     categoria: Math.min(quanti.categoria, TETTO_VOLTE) / TETTO_VOLTE,
     luogo: Math.min(quanti.luogo, TETTO_VOLTE) / TETTO_VOLTE,
+    // 1 sul posto 0 dal raggio in poi
+    vicinanza: km === null ? 0 : Math.max(0, 1 - km / RAGGIO_KM),
     imminenza: Math.max(0, 1 - giorni / FINESTRA_GIORNI),
   };
 
@@ -67,7 +75,7 @@ export function valuta(
   // a parità il primo dell'elenco
   let motivo: Motivo | null = null;
   let migliore = 0;
-  for (const s of ['persone', 'categoria', 'luogo'] as const) {
+  for (const s of ['persone', 'categoria', 'luogo', 'vicinanza'] as const) {
     const contributo = PESI[s] * segnali[s];
     if (contributo > migliore) {
       migliore = contributo;
@@ -85,10 +93,11 @@ export function ordina(
   presenti: Presenti,
   uid: string,
   adesso: number,
+  punto: Punto | null = null,
 ): Valutata[] {
   const valutate = elenco.map((attivita) => ({
     attivita,
-    ...valuta(attivita, statistiche, presenti[attivita.id] ?? [], uid, adesso),
+    ...valuta(attivita, statistiche, presenti[attivita.id] ?? [], uid, adesso, punto),
   }));
 
   return valutate.sort((a, b) => {
