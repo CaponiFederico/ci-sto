@@ -5,6 +5,7 @@ import express from 'express';
 import { creaAttivita, validaModifica, validaNuovaAttivita } from './attivita.js';
 import { esci, iscrivi, statoIscrizione } from './iscrizioni.js';
 import { cercaLuoghi, indirizzoDi } from './luoghi.js';
+import { invia } from './push.js';
 import { annullaAttivita, modificaAttivita } from './modifiche.js';
 import { riconferma } from './riconferme.js';
 import {
@@ -137,6 +138,19 @@ app.get('/v1/luoghi/inverso', richiediAutenticazione, richiediAteneo, async (req
   }
 
   res.json(await indirizzoDi(lat, lon));
+});
+
+// Una notifica di prova 
+app.post('/v1/notifiche/prova', richiediAutenticazione, richiediAteneo, async (req, res) => {
+  const uid = (req as RichiestaAutenticata).token.uid;
+  res.json(
+    await invia(uid, {
+      titolo: 'Bacheca',
+      testo: 'Le notifiche funzionano su questo dispositivo.',
+      indirizzo: '/#/',
+      etichetta: 'prova',
+    }),
+  );
 });
 
 // Gestore d'errore: con meno di quattro parametri Express non lo invoca mai.

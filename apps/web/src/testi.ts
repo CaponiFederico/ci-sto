@@ -143,6 +143,19 @@ export const VICINE = {
   nota: `Solo le attività con un indirizzo, entro ${RAGGIO_VICINO_KM} km in linea d’aria.`,
 };
 
+export const NOTIFICHE = {
+  attiva: 'Attiva le notifiche',
+  attive: 'Notifiche attive su questo dispositivo.',
+  disattiva: 'Disattiva',
+  prova: 'Mandane una di prova',
+  provaInviata: 'Inviata.',
+  provaFallita: 'Non inviata.',
+  negate: 'Le notifiche sono bloccate dal browsera.',
+  errore: 'Non è stato possibile completare l’operazione. Riprova.',
+  servizio:
+    'Il permesso c’è, ma il browser non riesce a registrarsi al suo servizio di notifiche.',
+};
+
 export const MAPPA = {
   corta: 'Almeno 3 caratteri,',
   nessuno: 'Nessun risultato. Prova a scriverlo in un altro modo, oppure pubblica senza indirizzo.',

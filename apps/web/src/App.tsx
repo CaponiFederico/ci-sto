@@ -3,6 +3,7 @@ import { useActionState, useEffect, useState, type FormEvent } from 'react';
 import { ErroreApi } from './api';
 import { accediConGoogle, accediConPassword, apriSessione, esci, sessioneRicordata } from './auth';
 import { Conferma, type Domanda } from './componenti/Conferma';
+import { Notifiche } from './componenti/Notifiche';
 import { FILTRI_INIZIALI } from './filtri';
 import { inviaSospese } from './invio';
 import { useSospese } from './dati';
@@ -269,6 +270,7 @@ function App() {
           </p>
         )}
 
+        {utente && <Notifiche uid={utente.uid} />}
         {utente && <InSospeso uid={utente.uid} online={online} />}
       </header>
 

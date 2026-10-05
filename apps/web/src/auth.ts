@@ -6,6 +6,7 @@ import {
 } from 'firebase/auth';
 import { chiamaApi } from './api';
 import { auth } from './firebase';
+import { disattivaNotifiche } from './notifiche';
 import { dimenticaPosizione } from './posizione';
 import { svuota } from './sospese';
 
@@ -49,6 +50,8 @@ export function sessioneRicordata(uid: string) {
 export async function esci() {
   localStorage.removeItem(RICORDO);
   dimenticaPosizione();
+  const attesa = new Promise((fatto) => setTimeout(fatto, 3000));
+  if (auth.currentUser) await Promise.race([disattivaNotifiche(auth.currentUser.uid).catch(() => {}), attesa]);
   // Svuota le sospese se l'utente si disconnette
   await svuota().catch(() => {});
   return signOut(auth);

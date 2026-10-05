@@ -20,6 +20,11 @@ export function indirizzoDi(lat: number, lon: number) {
   return chiamaApi<EsitoRicerca>(`/v1/luoghi/inverso?lat=${lat}&lon=${lon}`);
 }
 
+// Manda una notifica di prova 
+export function provaNotifica() {
+  return chiamaApi<{ inviate: number; tolte: number }>('/v1/notifiche/prova', { method: 'POST' });
+}
+
 // Ogni scrittura passa dall'API
 export function creaAttivita(nuova: NuovaAttivita) {
   return chiamaApi<{ id: string }>('/v1/attivita', { method: 'POST', body: JSON.stringify(nuova) });
