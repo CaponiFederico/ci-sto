@@ -37,6 +37,15 @@ Le variabili sono documentate in [`.env.example`](.env.example).
 Il file `.env` non è versionato: contiene valori legati alla propria
 installazione.
 
+Le notifiche hanno bisogno di una coppia di chiavi, da generare una volta:
+
+```bash
+npx web-push generate-vapid-keys
+```
+
+La chiave pubblica va in `VITE_VAPID_PUBLIC_KEY`, quella privata in `VAPID_PRIVATE_KEY`.
+Senza chiavi l'applicazione funziona lo stesso, con le notifiche spente.
+
 Poi, in due terminali:
 
 ```bash
@@ -128,17 +137,19 @@ apps/
     src/App.tsx           accesso e scelta della pagina
     src/percorso.ts       navigazione: l'indirizzo dopo # decide la pagina
     src/pagine/           elenco, nuova attività, dettaglio, modifica
-    src/componenti/       scheda, campi del modulo, luogo e ricerca, mappa, posizione, iscrizione, conferma, nome
+    src/componenti/       scheda, campi del modulo, luogo e ricerca, mappa, posizione, iscrizione, notifiche, conferma, nome
     src/dati.ts           letture da Firestore in tempo reale
     src/azioni.ts         scritture, sempre tramite l'API
     src/sospese.ts        richieste in sospeso, salvate su IndexedDB
     src/invio.ts          invio delle richieste in sospeso al ritorno della rete
     src/rete.ts           stato della connessione
     src/posizione.ts      posizione di chi guarda: dal dispositivo o da un indirizzo scelto
+    src/notifiche.ts      permesso e registrazione del dispositivo alle notifiche
+    src/stato-notifiche.ts  stato delle notifiche, condiviso fra intestazione e dettaglio
     src/filtri.ts         filtri dell'elenco
     src/ordine.ts         ordine personale: pesi, punteggio, motivo
     src/testi.ts          messaggi per ogni stato ed esito
-    src/sw.ts             service worker: precaching, fallback offline
+    src/sw.ts             service worker: precaching, fallback offline, notifiche in arrivo
     public/offline.html   pagina di fallback offline
   api/                    Express
     src/app.ts            rotte
@@ -149,6 +160,9 @@ apps/
     src/politiche.ts      le cinque politiche della lista d'attesa
     src/storico.ts        storico delle partecipazioni
     src/luoghi.ts         ricerca degli indirizzi su Nominatim: cache e limite di richieste
+    src/push.ts           invio di una notifica ai dispositivi di una persona
+    src/avvisi.ts         da ciò che è successo a chi avvisare e con quale testo
+    src/job.ts            operazioni a tempo: promemoria, scadenze, storico
 packages/
   modello/                tipi, costanti e regole condivise da web e api
 firebase.json             hosting, regole Firestore, emulatori
@@ -238,6 +252,40 @@ arriva, nell'ordine in cui arrivano. Se nel frattempo l'attività è stata spost
 viene accettata automaticamente ma l'app mostra che cosa è cambiato e chiede se iscriversi lo stesso.
 
 Uscendo dall'account le richieste in sospeso vengono scartate, dopo una conferma.
+
+## Notifiche
+
+Si attivano da «Attiva le notifiche».
+
+| Notifica | A chi | Quando |
+|---|---|---|
+| qualcuno si è iscritto, si è messo in lista o ha lasciato il posto | chi organizza | subito |
+| si è liberato un posto | il primo della lista d'attesa | subito |
+| orario o luogo sono cambiati | chi è iscritto; se il cambiamento è grande, con la richiesta di riconfermare | subito |
+| i posti sono diminuiti | chi ha perso il posto | subito |
+| l'attività è stata annullata | iscritti e lista d'attesa | subito |
+| il posto è stato liberato | chi non ha riconfermato in tempo | alla scadenza |
+| manca poco per riconfermare | chi non ha ancora riconfermato | 3 ore prima della scadenza |
+| promemoria | chi ha il posto | 2 ore prima dell'inizio |
+
+L'API le invia con Web Push(https://www.npmjs.com/package/web-push). Il messaggio viaggia cifrato fino al browser.
+Se un dispositivo non esiste più, la sua registrazione viene cancellata. Uscendo dall'account il
+dispositivo smette di ricevere.
+
+Le ultime tre righe della tabella non nascono da una reazione ad un evento degli utenti, ma dal tempo.
+Se ne occupa l'API stessa, all'avvio e poi ogni 5 minuti.
+
+Questo comando fa un giro solo, e ripeterlo non manda niente due volte:
+
+```bash
+npm run job
+```
+
+Con l'API spenta promemoria e scadenze non partono. Al riavvio le scadenze passate vengono applicate;
+un promemoria la cui attività è già cominciata no.
+
+Su Brave le notifiche richiedono «Usa i servizi Google per la messaggistica push», in
+`brave://settings/privacy`.
 
 ## Account di prova
 
