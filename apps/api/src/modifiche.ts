@@ -11,6 +11,7 @@ import {
   type Partecipante,
 } from 'modello';
 import type { Modifica } from './attivita.js';
+import type { Avvisa, Avviso } from './avvisi.js';
 import { leggiCoda, leggiPosti } from './coda.js';
 import { db, ID_ATTIVITA, TENTATIVI } from './firestore.js';
 import { promuovi, scadenzaRiconferma, applicaScadenze } from './riconferme.js';
@@ -31,21 +32,25 @@ function rifiutato(motivo: MotivoRifiutoModifica): EsitoModifica {
 interface Opzioni {
   forza?: boolean;
   orologio?: () => number;
+  // Riceve chi avvisare, solo se la modifica è stata scritta
+  avvisa?: Avvisa;
 }
 
 export async function modificaAttivita(
   idAttivita: string,
   uid: string,
   modifica: Modifica,
-  { forza = false, orologio = Date.now }: Opzioni = {},
+  { forza = false, orologio = Date.now, avvisa }: Opzioni = {},
 ): Promise<EsitoModifica> {
   if (!ID_ATTIVITA.test(idAttivita)) return rifiutato('inesistente');
-  await applicaScadenze(idAttivita, orologio);
+  await applicaScadenze(idAttivita, orologio, avvisa);
   const attivitaRif = db.collection(COLLEZIONI.attivita).doc(idAttivita);
   const partecipanti = attivitaRif.collection(SOTTOCOLLEZIONI.partecipanti);
   const eventi = attivitaRif.collection(SOTTOCOLLEZIONI.eventi);
+  let avvisi: Avviso[] = [];
 
-  return db.runTransaction(async (tx) => {
+  const esito = await db.runTransaction(async (tx): Promise<EsitoModifica> => {
+    avvisi = [];
     const adesso = orologio();
 
     const attivitaDoc = await tx.get(attivitaRif);
@@ -86,6 +91,9 @@ export async function modificaAttivita(
     const restano = posti.slice(eccesso);
     const promossi =
       liberi > 0 && attivita.inAttesa > 0 ? (await leggiCoda(tx, partecipanti, { politica: attivita.politicaCoda, adesso })).slice(0, liberi) : [];
+
+    // Un cambio di orario o luogo 
+    const tutti = tocca ? (await tx.get(partecipanti)).docs.map((d) => d.id) : [];
 
     const versione = attivita.versione + 1;
     const evento = (tipo: Evento['tipo'], utente: string): Evento => ({ tipo, utente, quando: adesso, versione });
@@ -136,6 +144,19 @@ export async function modificaAttivita(
       ...(entita && { entita }),
     });
 
+    // Un avviso a testa
+    const comune = { attivita: idAttivita, titolo: modifica.titolo ?? attivita.titolo };
+    const avvisati = new Set([uid]);
+    const aggiungi = (a: string, tipo: Avviso['tipo'], entro?: number) => {
+      if (avvisati.has(a)) return;
+      avvisati.add(a);
+      avvisi.push({ ...comune, a, tipo, ...(entro !== undefined && { entro }) });
+    };
+    for (const p of retrocessi) aggiungi(p.id, 'retrocesso');
+    for (const p of promossi) aggiungi(p.id, 'promosso', promossiDaConfermare.includes(p) ? confermaEntro : undefined);
+    if (maggiore) for (const p of restano) aggiungi(p.id, 'da_riconfermare', confermaEntro);
+    for (const id of tutti) aggiungi(id, 'modificata');
+
     return {
       esito: 'modificata',
       versione,
@@ -146,18 +167,24 @@ export async function modificaAttivita(
       daConfermare: [...(maggiore ? restano : []), ...promossiDaConfermare].map((p) => p.id),
     };
   }, { maxAttempts: TENTATIVI });
+
+  avvisa?.(avvisi);
+  return esito;
 }
 
 export async function annullaAttivita(
   idAttivita: string,
   uid: string,
   orologio: () => number = Date.now,
+  avvisa?: Avvisa,
 ): Promise<EsitoAnnullamento> {
   if (!ID_ATTIVITA.test(idAttivita)) return { esito: 'rifiutato', motivo: 'inesistente' };
   const attivitaRif = db.collection(COLLEZIONI.attivita).doc(idAttivita);
   const partecipanti = attivitaRif.collection(SOTTOCOLLEZIONI.partecipanti);
+  let avvisi: Avviso[] = [];
 
-  return db.runTransaction(async (tx): Promise<EsitoAnnullamento> => {
+  const esito = await db.runTransaction(async (tx): Promise<EsitoAnnullamento> => {
+    avvisi = [];
     const adesso = orologio();
 
     const attivitaDoc = await tx.get(attivitaRif);
@@ -181,6 +208,11 @@ export async function annullaAttivita(
       versione,
     } satisfies Evento);
 
-    return { esito: 'annullata', avvisare: iscritti.docs.map((d) => d.id).filter((id) => id !== uid) };
+    const avvisare = iscritti.docs.map((d) => d.id).filter((id) => id !== uid);
+    avvisi = avvisare.map((a) => ({ a, tipo: 'annullata', attivita: idAttivita, titolo: attivita.titolo }));
+    return { esito: 'annullata', avvisare };
   }, { maxAttempts: TENTATIVI });
+
+  avvisa?.(avvisi);
+  return esito;
 }

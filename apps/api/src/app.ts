@@ -90,7 +90,10 @@ app.patch('/v1/attivita/:id', richiediAutenticazione, richiediAteneo, async (req
 
   const uid = (req as RichiestaAutenticata).token.uid;
   const forza = req.body.forza === true;
-  res.json(await modificaAttivita(req.params.id as string, uid, esito.valore, { forza }));
+  const avvisi: Avviso[] = [];
+  const avvisa = (a: Avviso[]) => void avvisi.push(...a);
+  res.json(await modificaAttivita(req.params.id as string, uid, esito.valore, { forza, avvisa }));
+  void mandaAvvisi(avvisi);
 });
 
 // L'esito è la risposta
@@ -116,11 +119,17 @@ app.delete('/v1/attivita/:id/iscrizione', richiediAutenticazione, richiediAteneo
 });
 
 app.post('/v1/attivita/:id/riconferma', richiediAutenticazione, richiediAteneo, async (req, res) => {
-  res.json(await riconferma(req.params.id as string, (req as RichiestaAutenticata).token.uid));
+  const avvisi: Avviso[] = [];
+  const uid = (req as RichiestaAutenticata).token.uid;
+  res.json(await riconferma(req.params.id as string, uid, Date.now, (a) => avvisi.push(...a)));
+  void mandaAvvisi(avvisi);
 });
 
 app.post('/v1/attivita/:id/annullamento', richiediAutenticazione, richiediAteneo, async (req, res) => {
-  res.json(await annullaAttivita(req.params.id as string, (req as RichiestaAutenticata).token.uid));
+  const avvisi: Avviso[] = [];
+  const uid = (req as RichiestaAutenticata).token.uid;
+  res.json(await annullaAttivita(req.params.id as string, uid, Date.now, (a) => avvisi.push(...a)));
+  void mandaAvvisi(avvisi);
 });
 
 // no autenticazione ma solo a chi appartiene all'ateneo

@@ -31,7 +31,7 @@ export async function iscrivi(
 ): Promise<EsitoIscrizione> {
   if (!ID_ATTIVITA.test(idAttivita)) return rifiutato('inesistente');
   // Un posto non riconfermato in tempo è libero
-  await applicaScadenze(idAttivita, orologio);
+  await applicaScadenze(idAttivita, orologio, avvisa);
   const attivitaRif = db.collection(COLLEZIONI.attivita).doc(idAttivita);
   const partecipanti = attivitaRif.collection(SOTTOCOLLEZIONI.partecipanti);
   const partecipanteRif = partecipanti.doc(uid);
@@ -167,7 +167,7 @@ export async function esci(
   avvisa?: Avvisa,
 ): Promise<EsitoUscita> {
   if (!ID_ATTIVITA.test(idAttivita)) return { esito: 'non_iscritto' };
-  await applicaScadenze(idAttivita, orologio);
+  await applicaScadenze(idAttivita, orologio, avvisa);
   const attivitaRif = db.collection(COLLEZIONI.attivita).doc(idAttivita);
   const partecipanti = attivitaRif.collection(SOTTOCOLLEZIONI.partecipanti);
   const partecipanteRif = partecipanti.doc(uid);

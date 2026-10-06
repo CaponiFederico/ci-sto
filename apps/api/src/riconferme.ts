@@ -9,6 +9,7 @@ import {
   type MotivoRifiutoRiconferma,
   type Partecipante,
 } from 'modello';
+import type { Avvisa, Avviso } from './avvisi.js';
 import { leggiCoda, type InCoda } from './coda.js';
 import { db, ID_ATTIVITA, TENTATIVI } from './firestore.js';
 
@@ -55,12 +56,14 @@ function riferimenti(idAttivita: string) {
 }
 
 // Chi non ha riconfermato in tempo perde il posto
-export async function applicaScadenze(idAttivita: string, orologio: () => number = Date.now) {
+export async function applicaScadenze(idAttivita: string, orologio: () => number = Date.now, avvisa?: Avvisa) {
   const nessuno = { scaduti: [] as string[], promossi: [] as string[] };
   if (!ID_ATTIVITA.test(idAttivita)) return nessuno;
   const rif = riferimenti(idAttivita);
+  let avvisi: Avviso[] = [];
 
-  return db.runTransaction(async (tx) => {
+  const esito = await db.runTransaction(async (tx) => {
+    avvisi = [];
     const adesso = orologio();
 
     const attivitaDoc = await tx.get(rif.attivita);
@@ -94,7 +97,15 @@ export async function applicaScadenze(idAttivita: string, orologio: () => number
         versione: attivita.versione,
       } satisfies Evento);
     }
-    const nuoviDaConfermare = promossi.filter((p) => promuovi(tx, rif.eventi, p, attivita, adesso)).length;
+    const promossiDaConfermare = promossi.filter((p) => promuovi(tx, rif.eventi, p, attivita, adesso));
+    const nuoviDaConfermare = promossiDaConfermare.length;
+
+    const comune = { attivita: idAttivita, titolo: attivita.titolo };
+    for (const d of scaduti) avvisi.push({ ...comune, a: d.id, tipo: 'scaduto' });
+    for (const p of promossi) {
+      const entro = promossiDaConfermare.includes(p) ? scadenzaRiconferma(adesso, attivita.inizio) : undefined;
+      avvisi.push({ ...comune, a: p.id, tipo: 'promosso', ...(entro !== undefined && { entro }) });
+    }
 
     const postiOccupati = attivita.postiOccupati - scaduti.length + promossi.length;
     tx.update(rif.attivita, {
@@ -106,6 +117,9 @@ export async function applicaScadenze(idAttivita: string, orologio: () => number
 
     return { scaduti: scaduti.map((d) => d.id), promossi: promossi.map((p) => p.id) };
   }, { maxAttempts: TENTATIVI });
+
+  avvisa?.(avvisi);
+  return esito;
 }
 
 function rifiutato(motivo: MotivoRifiutoRiconferma): EsitoRiconferma {
@@ -116,6 +130,7 @@ export async function riconferma(
   idAttivita: string,
   uid: string,
   orologio: () => number = Date.now,
+  avvisa?: Avvisa,
 ): Promise<EsitoRiconferma> {
   if (!ID_ATTIVITA.test(idAttivita)) return rifiutato('inesistente');
   const rif = riferimenti(idAttivita);
@@ -153,6 +168,6 @@ export async function riconferma(
   }, { maxAttempts: TENTATIVI });
 
   // Fuori tempo
-  if (esito.esito === 'rifiutato' && esito.motivo === 'scaduta') await applicaScadenze(idAttivita, orologio);
+  if (esito.esito === 'rifiutato' && esito.motivo === 'scaduta') await applicaScadenze(idAttivita, orologio, avvisa);
   return esito;
 }
