@@ -83,6 +83,7 @@ export interface Attivita {
   creataIl: number;
   modificataIl: number;
   consolidataIl: number | null;
+  promemoriaPer?: number;
 }
 
 export interface NuovaAttivita {
@@ -103,6 +104,7 @@ export interface Partecipante {
   confermaEntro: number | null;
   confermatoIl: number | null;
   retrocessoIl: number | null;
+  scadenzaAvvisata?: number;
 }
 
 // attivita_cambiata: chi si iscrive aveva visto l'attività prima di una modifica maggiore

@@ -11,7 +11,9 @@ export type TipoAvviso =
   | 'modificata'
   | 'retrocesso'
   | 'annullata'
-  | 'scaduto';
+  | 'scaduto'
+  | 'promemoria'
+  | 'scadenza_vicina';
 
 export interface Avviso {
   a: string;
@@ -20,6 +22,8 @@ export interface Avviso {
   titolo: string;
   chi?: string;
   entro?: number;
+  // per il promemoria
+  inizio?: number;
 }
 
 // Può essere chiamata più di una volta per la stessa operazione: chi la passa accumula
@@ -47,6 +51,8 @@ const TESTO: Record<TipoAvviso, (avviso: Avviso, nome: string) => string> = {
   retrocesso: () => 'I posti sono diminuiti: ora sei in testa alla lista d’attesa',
   annullata: () => 'L’attività è stata annullata',
   scaduto: () => 'Non hai riconfermato in tempo: il tuo posto è stato liberato',
+  promemoria: (avviso) => `Comincia ${ora.format(avviso.inizio)}`,
+  scadenza_vicina: (avviso) => `Riconferma entro ${ora.format(avviso.entro)}, poi il posto si libera`,
 };
 
 async function nomeDi(uid: string) {
