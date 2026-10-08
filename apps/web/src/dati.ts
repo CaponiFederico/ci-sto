@@ -287,7 +287,6 @@ export function useCronologia(id: string) {
 }
 
 // Legge il nome di un utente
-// Se non c'è restituisce l'email senza dominio
 // Se non c'è restituisce "Utente"
 const nomi = new Map<string, Promise<string>>();
 
@@ -297,7 +296,7 @@ export function leggiNome(uid: string) {
     nome = getDoc(doc(db, COLLEZIONI.utenti, uid))
       .then((d) => {
         const utente = d.data() as Partial<Utente> | undefined;
-        return utente?.nome ?? utente?.email?.split('@')[0] ?? 'Utente';
+        return utente?.nome ?? 'Utente';
       })
       // Anche l'errore resta in memoria
       .catch(() => 'Utente');

@@ -57,7 +57,7 @@ const TESTO: Record<TipoAvviso, (avviso: Avviso, nome: string) => string> = {
 
 async function nomeDi(uid: string) {
   const utente = (await db.collection(COLLEZIONI.utenti).doc(uid).get()).data() as Partial<Utente> | undefined;
-  return utente?.nome ?? utente?.email?.split('@')[0] ?? 'Qualcuno';
+  return utente?.nome ?? 'Qualcuno';
 }
 
 export function creaAvvisi(manda: (uid: string, notifica: Notifica) => Promise<unknown>) {

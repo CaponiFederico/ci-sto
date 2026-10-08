@@ -56,13 +56,15 @@ app.post('/v1/session', richiediAutenticazione, async (req, res) => {
   }
 
   const adesso = Date.now();
-  const profilo: Partial<Utente> = { email: email!, ultimoAccesso: adesso };
-  if (name) profilo.nome = name as string;
-
   const riferimento = db.collection(COLLEZIONI.utenti).doc(uid);
+  const esistente = (await riferimento.get()).data() as Partial<Utente> | undefined;
+
+  const profilo: Partial<Utente> = { ultimoAccesso: adesso };
+  if (name) profilo.nome = name as string;
+  else if (!esistente?.nome) profilo.nome = email!.split('@')[0];
 
   // Con merge un campo presente verrebbe riscritto a ogni accesso
-  if (!(await riferimento.get()).exists) profilo.primoAccesso = adesso;
+  if (!esistente) profilo.primoAccesso = adesso;
 
   await riferimento.set(profilo, { merge: true });
 
