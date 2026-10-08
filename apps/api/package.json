@@ -10,7 +10,8 @@
     "utente-test": "tsx src/scripts/crea-utente-test.ts",
     "popola": "tsx src/scripts/popola.ts",
     "consolida": "tsx src/scripts/consolida.ts",
-    "job": "tsx src/scripts/job.ts"
+    "job": "tsx src/scripts/job.ts",
+    "scenario": "tsx src/scripts/carica-scenario.ts"
   },
   "dependencies": {
     "cors": "^2.8.6",

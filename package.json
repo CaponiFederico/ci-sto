@@ -25,6 +25,7 @@
     "popola": "npm run build:modello && firebase emulators:exec --only firestore \"npm run popola --workspace api\"",
     "consolida": "npm run build:modello && npm run consolida --workspace api",
     "job": "npm run build:modello && npm run job --workspace api",
+    "scenario": "npm run build:modello && npm run scenario --workspace api --",
     "emulatori": "firebase emulators:start",
     "deploy": "npm run build:web && firebase deploy --only hosting",
     "deploy:regole": "firebase deploy --only firestore:rules",

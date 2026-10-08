@@ -45,6 +45,21 @@ async function scriviProfili(uidDi: (p: string) => string, oggi: number) {
   }
 }
 
+export async function togliScenario(interpreti: Interpreti = {}) {
+  let tolte = 0;
+  for (const personaggio of Object.keys(PERSONE) as Personaggio[]) {
+    const uid = interpreti[personaggio] ?? personaggio;
+    const sue = await db.collection(COLLEZIONI.attivita).where('organizzatore', '==', uid).get();
+    for (const d of sue.docs) {
+      // Con l'attività spariscono partecipanti e cronologia
+      await db.recursiveDelete(d.ref);
+      tolte += 1;
+    }
+    await db.collection(COLLEZIONI.statistiche).doc(uid).delete();
+  }
+  return tolte;
+}
+
 export interface Riga {
   posizione: number;
   uid: string;
