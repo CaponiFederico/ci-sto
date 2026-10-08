@@ -14,7 +14,7 @@ const ordini = await popolaStorico(Date.now());
 
 for (const [politica, righe] of Object.entries(ordini)) {
   console.log(`\n${politica}`);
-  for (const { posizione, uid, motivo } of righe) console.log(`  ${posizione}. ${uid.padEnd(7)} ${motivo}`);
+  for (const { posizione, uid, motivo } of righe) console.log(`  ${posizione}. ${uid.padEnd(10)} ${motivo}`);
 }
 
 await db.terminate();
