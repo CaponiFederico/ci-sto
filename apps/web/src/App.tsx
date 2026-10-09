@@ -15,6 +15,7 @@ import { Modifica } from './pagine/Modifica';
 import { Nuova } from './pagine/Nuova';
 import { rotta, usePercorso } from './percorso';
 import { ContestoPosizione, useRilevaPosizione } from './posizione';
+import { applicaAggiornamento, useNuovaVersione } from './pwa';
 import { useOnline } from './rete';
 import { ContestoUtente } from './sessione';
 import { togli } from './sospese';
@@ -157,6 +158,7 @@ function App() {
   const [accessoInCorso, setAccessoInCorso] = useState(false);
   const [errore, setErrore] = useState<string | null>(null);
   const online = useOnline();
+  const nuovaVersione = useNuovaVersione();
   const notifiche = useGestisciNotifiche(utente?.uid ?? null);
 
   // Vale sia per l'accesso appena fatto sia per la sessione ripresa al ricaricamento.
@@ -269,6 +271,15 @@ function App() {
         {!online && (
           <p className="offline" role="status">
             Sei offline: vedi i dati salvati su questo dispositivo.
+          </p>
+        )}
+
+        {nuovaVersione && (
+          <p className="offline" role="status">
+            È disponibile una nuova versione.{' '}
+            <button type="button" onClick={applicaAggiornamento}>
+              Aggiorna
+            </button>
           </p>
         )}
 

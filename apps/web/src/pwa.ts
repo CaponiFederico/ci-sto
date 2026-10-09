@@ -1,4 +1,10 @@
+import { useEffect, useState } from 'react';
 import { registerSW } from 'virtual:pwa-register';
+
+const NUOVA_VERSIONE = 'bacheca:nuova-versione';
+
+let nuovaVersione = false;
+let aggiornaSW: ((ricarica?: boolean) => Promise<void>) | undefined;
 
 export function setupPwa() {
   // Il service worker chiede di aprire una pagina quando si tocca una notifica
@@ -9,7 +15,7 @@ export function setupPwa() {
     location.hash = cancelletto === -1 ? '#/' : dati.indirizzo.slice(cancelletto);
   });
 
-  return registerSW({
+  aggiornaSW = registerSW({
     immediate: true,
 
     onRegisteredSW(url) {
@@ -25,7 +31,26 @@ export function setupPwa() {
     },
 
     onNeedRefresh() {
-      console.info('[pwa] è disponibile una nuova versione');
+      nuovaVersione = true;
+      window.dispatchEvent(new Event(NUOVA_VERSIONE));
     },
   });
+}
+
+// Attiva il service worker in attesa e ricarica la pagina
+export function applicaAggiornamento() {
+  void aggiornaSW?.(true);
+}
+
+// Hook per sapere se c'è una versione nuova pronta
+export function useNuovaVersione() {
+  const [pronta, setPronta] = useState(nuovaVersione);
+
+  useEffect(() => {
+    const arrivata = () => setPronta(true);
+    window.addEventListener(NUOVA_VERSIONE, arrivata);
+    return () => window.removeEventListener(NUOVA_VERSIONE, arrivata);
+  }, []);
+
+  return pronta;
 }
