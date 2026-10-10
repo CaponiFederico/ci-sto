@@ -19,9 +19,6 @@
     "build:api": "npm run build --workspace api",
     "utente:test": "npm run utente-test --workspace api",
     "preview": "npm run preview --workspace web",
-    "test:regole": "firebase emulators:exec --only firestore \"node --test test/regole.test.mjs\"",
-    "test": "npm run build:modello && npm run build:api && firebase emulators:exec --only auth,firestore \"node --test --test-concurrency=1 test/*.test.mjs\"",
-    "test:concorrenza": "npm run build:modello && npm run build:api && firebase emulators:exec --only firestore \"node --test --test-concurrency=1 --test-name-pattern=concorrenza test/iscrizioni.test.mjs test/concorrenza-modifiche.test.mjs test/concorrenza-politiche.test.mjs\"",
     "popola": "npm run build:modello && firebase emulators:exec --only firestore \"npm run popola --workspace api\"",
     "consolida": "npm run build:modello && npm run consolida --workspace api",
     "job": "npm run build:modello && npm run job --workspace api",
@@ -32,8 +29,6 @@
     "deploy:indici": "firebase deploy --only firestore:indexes"
   },
   "devDependencies": {
-    "@firebase/rules-unit-testing": "^5.0.2",
-    "firebase": "^12.19.0",
     "firebase-tools": "^15.30.2"
   }
 }

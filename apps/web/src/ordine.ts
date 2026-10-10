@@ -2,14 +2,14 @@ import { chiaveLuogo, distanzaKm, type Punto, type Statistiche } from 'modello';
 import type { AttivitaConId } from './dati';
 
 // peso dei segnali che fanno salire un'attività
-export const PESI = { persone: 3, categoria: 2, luogo: 1, vicinanza: 2, imminenza: 4 } as const;
+const PESI = { persone: 3, categoria: 2, luogo: 1, vicinanza: 2, imminenza: 4 } as const;
 
 // Oltre il tetto un segnale non cresce più
-export const TETTO_PERSONE = 3;
-export const TETTO_VOLTE = 5;
+const TETTO_PERSONE = 3;
+const TETTO_VOLTE = 5;
 // La finestra temporale in cui l'imminenza conta: oltre non fa più salire
-export const FINESTRA_GIORNI = 14;
-export const RAGGIO_KM = 5;
+const FINESTRA_GIORNI = 14;
+const RAGGIO_KM = 5;
 
 const GIORNO = 24 * 60 * 60 * 1000;
 
@@ -35,7 +35,7 @@ export type Valutata = Valutazione & { attivita: AttivitaConId };
 export type Presenti = Record<string, string[]>;
 
 // 
-export function valuta(
+function valuta(
   attivita: AttivitaConId,
   statistiche: Statistiche | null,
   presenti: string[],

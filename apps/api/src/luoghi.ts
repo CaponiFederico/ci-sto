@@ -15,14 +15,6 @@ const TETTO_CACHE = 500;
 const CODA_MASSIMA = 5;
 const TEMPO_MASSIMO = 5000;
 
-interface Opzioni {
-  chiama?: typeof fetch;
-  orologio?: () => number;
-  attendi?: (ms: number) => Promise<void>;
-  intervallo?: number;
-  tettoCache?: number;
-}
-
 // normlizzazione
 function normalizza(q: string) {
   return q.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -42,81 +34,69 @@ function leggi(dati: unknown): LuogoTrovato[] {
 }
 
 // cache
-export function creaRicerca({
-  chiama = fetch,
-  orologio = Date.now,
-  attendi = (ms) => new Promise((fatto) => setTimeout(fatto, ms)),
-  intervallo = INTERVALLO,
-  tettoCache = TETTO_CACHE,
-}: Opzioni = {}) {
-  const cache = new Map<string, LuogoTrovato[]>();
-  let turno: Promise<unknown> = Promise.resolve();
-  let inAttesa = 0;
-  let ultima = -Infinity;
+const cache = new Map<string, LuogoTrovato[]>();
+let turno: Promise<unknown> = Promise.resolve();
+let inAttesa = 0;
+let ultima = -Infinity;
 
-  async function chiedi(chiave: string, indirizzo: string, estrai: (dati: unknown) => LuogoTrovato[]): Promise<EsitoRicerca> {
-    const pronti = cache.get(chiave);
-    if (pronti) return { esito: 'trovati', luoghi: pronti };
+async function chiedi(chiave: string, indirizzo: string, estrai: (dati: unknown) => LuogoTrovato[]): Promise<EsitoRicerca> {
+  const pronti = cache.get(chiave);
+  if (pronti) return { esito: 'trovati', luoghi: pronti };
 
-    const attesa = ultima + intervallo - orologio();
-    if (attesa > 0) await attendi(attesa);
-    ultima = orologio();
+  const attesa = ultima + INTERVALLO - Date.now();
+  if (attesa > 0) await new Promise((fatto) => setTimeout(fatto, attesa));
+  ultima = Date.now();
 
-    try {
-      const risposta = await chiama(indirizzo, {
-        headers: { 'User-Agent': USER_AGENT },
-        signal: AbortSignal.timeout(TEMPO_MASSIMO),
-      });
-      if (!risposta.ok) return { esito: 'non_disponibile' };
-
-      const luoghi = estrai(await risposta.json());
-      cache.set(chiave, luoghi);
-      if (cache.size > tettoCache) cache.delete(cache.keys().next().value!);
-      return { esito: 'trovati', luoghi };
-    } catch {
-      return { esito: 'non_disponibile' };
-    }
-  }
-
-  // Ricerca e ricerca inversa passano dalla stessa coda
-  function inCoda(chiave: string, indirizzo: string, estrai: (dati: unknown) => LuogoTrovato[]): Promise<EsitoRicerca> {
-    const pronti = cache.get(chiave);
-    if (pronti) return Promise.resolve({ esito: 'trovati', luoghi: pronti });
-
-    if (inAttesa >= CODA_MASSIMA) return Promise.resolve({ esito: 'non_disponibile' });
-
-    inAttesa += 1;
-    const mia = turno.then(() => chiedi(chiave, indirizzo, estrai)).finally(() => (inAttesa -= 1));
-    turno = mia;
-    return mia;
-  }
-
-  function cerca(q: string) {
-    const chiave = normalizza(q);
-    const parametri = new URLSearchParams({
-      q: chiave,
-      format: 'jsonv2',
-      limit: '5',
-      countrycodes: 'it',
-      viewbox: PISA,
-      'accept-language': 'it',
+  try {
+    const risposta = await fetch(indirizzo, {
+      headers: { 'User-Agent': USER_AGENT },
+      signal: AbortSignal.timeout(TEMPO_MASSIMO),
     });
-    return inCoda(chiave, `${NOMINATIM}/search?${parametri}`, leggi);
-  }
+    if (!risposta.ok) return { esito: 'non_disponibile' };
 
-  function inverso(lat: number, lon: number) {
-    const punto = { lat: Number(lat.toFixed(4)), lon: Number(lon.toFixed(4)) };
-    const parametri = new URLSearchParams({
-      lat: String(punto.lat),
-      lon: String(punto.lon),
-      format: 'jsonv2',
-      'accept-language': 'it',
-    });
-    const estrai = (dati: unknown) => leggi([dati]).map((trovato) => ({ ...trovato, ...punto }));
-    return inCoda(`inverso:${punto.lat},${punto.lon}`, `${NOMINATIM}/reverse?${parametri}`, estrai);
+    const luoghi = estrai(await risposta.json());
+    cache.set(chiave, luoghi);
+    if (cache.size > TETTO_CACHE) cache.delete(cache.keys().next().value!);
+    return { esito: 'trovati', luoghi };
+  } catch {
+    return { esito: 'non_disponibile' };
   }
-
-  return { cerca, inverso };
 }
 
-export const { cerca: cercaLuoghi, inverso: indirizzoDi } = creaRicerca();
+// Ricerca e ricerca inversa passano dalla stessa coda
+function inCoda(chiave: string, indirizzo: string, estrai: (dati: unknown) => LuogoTrovato[]): Promise<EsitoRicerca> {
+  const pronti = cache.get(chiave);
+  if (pronti) return Promise.resolve({ esito: 'trovati', luoghi: pronti });
+
+  if (inAttesa >= CODA_MASSIMA) return Promise.resolve({ esito: 'non_disponibile' });
+
+  inAttesa += 1;
+  const mia = turno.then(() => chiedi(chiave, indirizzo, estrai)).finally(() => (inAttesa -= 1));
+  turno = mia;
+  return mia;
+}
+
+export function cercaLuoghi(q: string) {
+  const chiave = normalizza(q);
+  const parametri = new URLSearchParams({
+    q: chiave,
+    format: 'jsonv2',
+    limit: '5',
+    countrycodes: 'it',
+    viewbox: PISA,
+    'accept-language': 'it',
+  });
+  return inCoda(chiave, `${NOMINATIM}/search?${parametri}`, leggi);
+}
+
+export function indirizzoDi(lat: number, lon: number) {
+  const punto = { lat: Number(lat.toFixed(4)), lon: Number(lon.toFixed(4)) };
+  const parametri = new URLSearchParams({
+    lat: String(punto.lat),
+    lon: String(punto.lon),
+    format: 'jsonv2',
+    'accept-language': 'it',
+  });
+  const estrai = (dati: unknown) => leggi([dati]).map((trovato) => ({ ...trovato, ...punto }));
+  return inCoda(`inverso:${punto.lat},${punto.lon}`, `${NOMINATIM}/reverse?${parametri}`, estrai);
+}

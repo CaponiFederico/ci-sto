@@ -3,7 +3,7 @@ import { COLLEZIONI, SOTTOCOLLEZIONI, type Notifica, type Sottoscrizione } from 
 import { db } from './firestore.js';
 
 
-export type Mittente = (sottoscrizione: Sottoscrizione, corpo: string) => Promise<unknown>;
+type Mittente = (sottoscrizione: Sottoscrizione, corpo: string) => Promise<unknown>;
 
 // I servizi di push dei browser
 const SERVIZI = [
@@ -44,51 +44,49 @@ function mittenteVero(): Mittente | null {
     webpush.sendNotification({ endpoint: s.endpoint, keys: s.chiavi }, corpo, { TTL: DURATA_SECONDI });
 }
 
-export interface Invio {
+interface Invio {
   inviate: number;
   tolte: number;
 }
 
-export function creaInvio(mittente: Mittente | null) {
-  return async function invia(uid: string, notifica: Notifica): Promise<Invio> {
-    const esito: Invio = { inviate: 0, tolte: 0 };
-    if (!mittente) return esito;
+const mittente = mittenteVero();
 
-    try {
-      const dispositivi = await db
-        .collection(COLLEZIONI.sottoscrizioni)
-        .doc(uid)
-        .collection(SOTTOCOLLEZIONI.dispositivi)
-        .get();
-      const corpo = JSON.stringify(notifica);
+export async function invia(uid: string, notifica: Notifica): Promise<Invio> {
+  const esito: Invio = { inviate: 0, tolte: 0 };
+  if (!mittente) return esito;
 
-      // più dispositivi a ciascuno il suo invio
-      await Promise.all(
-        dispositivi.docs.map(async (d) => {
-          const sottoscrizione = d.data() as Sottoscrizione;
-          if (!fidato(sottoscrizione.endpoint)) return;
+  try {
+    const dispositivi = await db
+      .collection(COLLEZIONI.sottoscrizioni)
+      .doc(uid)
+      .collection(SOTTOCOLLEZIONI.dispositivi)
+      .get();
+    const corpo = JSON.stringify(notifica);
 
-          try {
-            await mittente(sottoscrizione, corpo);
-            esito.inviate += 1;
-          } catch (errore) {
-            // 404 e 410: il browser ha revocato la sottoscrizione
-            const stato = (errore as { statusCode?: number }).statusCode;
-            if (stato === 404 || stato === 410) {
-              await d.ref.delete();
-              esito.tolte += 1;
-            } else {
-              console.warn(`notifica non inviata (${stato ?? 'errore di rete'})`);
-            }
+    // più dispositivi a ciascuno il suo invio
+    await Promise.all(
+      dispositivi.docs.map(async (d) => {
+        const sottoscrizione = d.data() as Sottoscrizione;
+        if (!fidato(sottoscrizione.endpoint)) return;
+
+        try {
+          await mittente(sottoscrizione, corpo);
+          esito.inviate += 1;
+        } catch (errore) {
+          // 404 e 410: il browser ha revocato la sottoscrizione
+          const stato = (errore as { statusCode?: number }).statusCode;
+          if (stato === 404 || stato === 410) {
+            await d.ref.delete();
+            esito.tolte += 1;
+          } else {
+            console.warn(`notifica non inviata (${stato ?? 'errore di rete'})`);
           }
-        }),
-      );
-    } catch (errore) {
-      console.warn('notifiche non inviate:', (errore as Error).message);
-    }
+        }
+      }),
+    );
+  } catch (errore) {
+    console.warn('notifiche non inviate:', (errore as Error).message);
+  }
 
-    return esito;
-  };
+  return esito;
 }
-
-export const invia = creaInvio(mittenteVero());

@@ -15,8 +15,6 @@ export type EsitoConsolidamento =
   | { esito: 'gia_consolidata' }
   | { esito: 'rifiutato'; motivo: 'inesistente' | 'annullata' | 'non_iniziata' };
 
-export { chiaveLuogo };
-
 const vuote = (): Statistiche => ({
   partecipazioni: 0,
   ultimaPartecipazione: null,
@@ -98,8 +96,8 @@ export interface Consolidata {
 }
 
 // Consolida tutte le attività cominciate che non lo sono ancora
-export async function consolidaCominciate(orologio: () => number = Date.now): Promise<Consolidata[]> {
-  const cominciate = await db.collection(COLLEZIONI.attivita).where('inizio', '<=', orologio()).get();
+export async function consolidaCominciate(): Promise<Consolidata[]> {
+  const cominciate = await db.collection(COLLEZIONI.attivita).where('inizio', '<=', Date.now()).get();
 
   // Il filtro evita una transazione per ogni attività già a posto
   const daFare = cominciate.docs.filter((d) => {
@@ -110,7 +108,7 @@ export async function consolidaCominciate(orologio: () => number = Date.now): Pr
   const fatte: Consolidata[] = [];
   // Una alla volta
   for (const d of daFare) {
-    fatte.push({ id: d.id, titolo: (d.data() as Attivita).titolo, esito: await consolidaAttivita(d.id, orologio) });
+    fatte.push({ id: d.id, titolo: (d.data() as Attivita).titolo, esito: await consolidaAttivita(d.id) });
   }
   return fatte;
 }

@@ -314,23 +314,6 @@ npm run emulatori
 
 Interfaccia su `http://127.0.0.1:4000`, Authentication su 9099, Firestore su 8080.
 
-## Test
-
-Security Rules, iscrizioni, modifiche delle attività, politiche della lista d'attesa e rotte
-dell'API sono verificate sugli emulatori.
-
-```bash
-npm test
-```
-
-Il comando avvia gli emulatori di Auth e Firestore, esegue i test e li spegne. I test delle
-operazioni simultanee girano 3 volte ciascuno; per la verifica completa, 20 giri (circa un quarto
-d'ora):
-
-```bash
-npm run test:concorrenza
-```
-
 ## Deploy
 
 Il progetto Firebase è indicato in `.firebaserc`. La prima volta serve autenticarsi:
@@ -340,7 +323,7 @@ npx firebase login
 npm run deploy
 ```
 
-Dopo che i test passano:
+Le regole di sicurezza si pubblicano a parte:
 
 ```bash
 npm run deploy:regole

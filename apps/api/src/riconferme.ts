@@ -13,8 +13,6 @@ import type { Avvisa, Avviso } from './avvisi.js';
 import { leggiCoda, type InCoda } from './coda.js';
 import { db, ID_ATTIVITA, TENTATIVI } from './firestore.js';
 
-export { RICONFERMA_ORE } from 'modello';
-
 // Il tempo di decidere, ma mai oltre l'inizio
 export function scadenzaRiconferma(adesso: number, inizio: number) {
   return Math.min(adesso + RICONFERMA_ORE * 60 * 60 * 1000, inizio);
@@ -129,7 +127,6 @@ function rifiutato(motivo: MotivoRifiutoRiconferma): EsitoRiconferma {
 export async function riconferma(
   idAttivita: string,
   uid: string,
-  orologio: () => number = Date.now,
   avvisa?: Avvisa,
 ): Promise<EsitoRiconferma> {
   if (!ID_ATTIVITA.test(idAttivita)) return rifiutato('inesistente');
@@ -137,7 +134,7 @@ export async function riconferma(
   const partecipanteRif = rif.partecipanti.doc(uid);
 
   const esito = await db.runTransaction(async (tx): Promise<EsitoRiconferma> => {
-    const adesso = orologio();
+    const adesso = Date.now();
 
     const attivitaDoc = await tx.get(rif.attivita);
     const partecipanteDoc = await tx.get(partecipanteRif);
@@ -168,6 +165,6 @@ export async function riconferma(
   }, { maxAttempts: TENTATIVI });
 
   // Fuori tempo
-  if (esito.esito === 'rifiutato' && esito.motivo === 'scaduta') await applicaScadenze(idAttivita, orologio, avvisa);
+  if (esito.esito === 'rifiutato' && esito.motivo === 'scaduta') await applicaScadenze(idAttivita, Date.now, avvisa);
   return esito;
 }

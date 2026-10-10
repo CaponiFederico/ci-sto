@@ -7,13 +7,13 @@ import { consolidaAttivita } from './storico.js';
 const ORA = 60 * 60 * 1000;
 
 
-export const ANTICIPO_PROMEMORIA = 2 * ORA;
-export const PREAVVISO_SCADENZA = 3 * ORA;
+const ANTICIPO_PROMEMORIA = 2 * ORA;
+const PREAVVISO_SCADENZA = 3 * ORA;
 const FINESTRA = 7 * 24 * ORA;
 // ogni 5 minuti, ma un giro non parte se il precedente non ha finito
-export const INTERVALLO_JOB = 5 * 60 * 1000;
+const INTERVALLO_JOB = 5 * 60 * 1000;
 
-export interface EsitoJob {
+interface EsitoJob {
   consolidate: number;
   scadute: number;
   promemoria: number;
@@ -25,11 +25,11 @@ function riferimenti(id: string) {
   return { attivita, partecipanti: attivita.collection(SOTTOCOLLEZIONI.partecipanti) };
 }
 
-async function prenotaPromemoria(id: string, orologio: () => number): Promise<Avviso[]> {
+async function prenotaPromemoria(id: string): Promise<Avviso[]> {
   const rif = riferimenti(id);
 
   return db.runTransaction(async (tx) => {
-    const adesso = orologio();
+    const adesso = Date.now();
     const attivita = (await tx.get(rif.attivita)).data() as Attivita | undefined;
     if (!attivita || attivita.stato === 'annullata') return [];
     if (attivita.inizio <= adesso || attivita.inizio > adesso + ANTICIPO_PROMEMORIA) return [];
@@ -48,11 +48,11 @@ async function prenotaPromemoria(id: string, orologio: () => number): Promise<Av
   }, { maxAttempts: TENTATIVI });
 }
 //preavvisi per chi deve riconfermare 
-async function prenotaPreavvisi(id: string, orologio: () => number): Promise<Avviso[]> {  
+async function prenotaPreavvisi(id: string): Promise<Avviso[]> {
   const rif = riferimenti(id);
 
   return db.runTransaction(async (tx) => {
-    const adesso = orologio();
+    const adesso = Date.now();
     const attivita = (await tx.get(rif.attivita)).data() as Attivita | undefined;
     if (!attivita || attivita.stato === 'annullata' || attivita.daConfermare === 0) return [];
 
@@ -70,12 +70,9 @@ async function prenotaPreavvisi(id: string, orologio: () => number): Promise<Avv
   }, { maxAttempts: TENTATIVI });
 }
 
-export async function eseguiJob(
-  orologio: () => number = Date.now,
-  manda: (avvisi: Avviso[]) => Promise<unknown> = mandaAvvisi,
-): Promise<EsitoJob> {
+export async function eseguiJob(): Promise<EsitoJob> {
   const esito: EsitoJob = { consolidate: 0, scadute: 0, promemoria: 0, preavvisi: 0 };
-  const adesso = orologio();
+  const adesso = Date.now();
   const recenti = await db.collection(COLLEZIONI.attivita).where('inizio', '>=', adesso - FINESTRA).get();
 
   for (const d of recenti.docs) {
@@ -86,23 +83,23 @@ export async function eseguiJob(
     try {
       if (attivita.inizio <= adesso) {
         if ((attivita.consolidataIl ?? null) === null) {
-          const consolidamento = await consolidaAttivita(d.id, orologio);
+          const consolidamento = await consolidaAttivita(d.id);
           if (consolidamento.esito === 'consolidata') esito.consolidate += 1;
         }
         continue;
       }
 
       if (attivita.daConfermare > 0) {
-        const { scaduti } = await applicaScadenze(d.id, orologio, (nuovi) => avvisi.push(...nuovi));
+        const { scaduti } = await applicaScadenze(d.id, Date.now, (nuovi) => avvisi.push(...nuovi));
         esito.scadute += scaduti.length;
 
-        const preavvisi = await prenotaPreavvisi(d.id, orologio);
+        const preavvisi = await prenotaPreavvisi(d.id);
         esito.preavvisi += preavvisi.length;
         avvisi.push(...preavvisi);
       }
 
       if (attivita.inizio <= adesso + ANTICIPO_PROMEMORIA && attivita.promemoriaPer !== attivita.inizio) {
-        const promemoria = await prenotaPromemoria(d.id, orologio);
+        const promemoria = await prenotaPromemoria(d.id);
         esito.promemoria += promemoria.length;
         avvisi.push(...promemoria);
       }
@@ -110,7 +107,7 @@ export async function eseguiJob(
       console.warn(`job: attività ${d.id} saltata:`, (errore as Error).message);
     }
 
-    await manda(avvisi);
+    await mandaAvvisi(avvisi);
   }
 
   return esito;

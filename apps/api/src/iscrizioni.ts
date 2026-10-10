@@ -138,7 +138,6 @@ export async function iscrivi(
 export async function statoIscrizione(
   idAttivita: string,
   uid: string,
-  orologio: () => number = Date.now,
 ): Promise<StatoIscrizione> {
   if (!ID_ATTIVITA.test(idAttivita)) return { stato: 'non_iscritto' };
   const attivitaRif = db.collection(COLLEZIONI.attivita).doc(idAttivita);
@@ -154,7 +153,7 @@ export async function statoIscrizione(
     if (stato === 'confermato') return { stato };
     if (stato === 'da_confermare') return { stato, entro: confermaEntro! };
 
-    const coda = await leggiCoda(tx, partecipanti, { politica: politicaCoda, adesso: orologio() });
+    const coda = await leggiCoda(tx, partecipanti, { politica: politicaCoda, adesso: Date.now() });
     const indice = coda.findIndex((p) => p.id === uid);
     return { stato, posizione: indice + 1, motivo: coda[indice]!.motivo };
   }, { readOnly: true });

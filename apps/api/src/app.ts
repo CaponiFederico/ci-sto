@@ -123,7 +123,7 @@ app.delete('/v1/attivita/:id/iscrizione', richiediAutenticazione, richiediAteneo
 app.post('/v1/attivita/:id/riconferma', richiediAutenticazione, richiediAteneo, async (req, res) => {
   const avvisi: Avviso[] = [];
   const uid = (req as RichiestaAutenticata).token.uid;
-  res.json(await riconferma(req.params.id as string, uid, Date.now, (a) => avvisi.push(...a)));
+  res.json(await riconferma(req.params.id as string, uid, (a) => avvisi.push(...a)));
   void mandaAvvisi(avvisi);
 });
 

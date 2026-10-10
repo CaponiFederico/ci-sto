@@ -8,8 +8,8 @@ import { consolidaAttivita } from './storico.js';
 const MINUTO = 60 * 1000;
 const GIORNO = 24 * 60 * MINUTO;
 
-export const POLITICHE: PoliticaCoda[] = ['fifo', 'affinita', 'esplorazione', 'rotazione', 'equita'];
-export const IN_CODA = ['rossini', 'verdi', 'morricone', 'einaudi', 'bellini', 'paganini'];
+const POLITICHE: PoliticaCoda[] = ['fifo', 'affinita', 'esplorazione', 'rotazione', 'equita'];
+const IN_CODA = ['rossini', 'verdi', 'morricone', 'einaudi', 'bellini', 'paganini'];
 
 // Persone d'esempio che si iscrivono alle attività
 export const PERSONE = {

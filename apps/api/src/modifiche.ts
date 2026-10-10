@@ -16,10 +16,6 @@ import { leggiCoda, leggiPosti } from './coda.js';
 import { db, ID_ATTIVITA, TENTATIVI } from './firestore.js';
 import { promuovi, scadenzaRiconferma, applicaScadenze } from './riconferme.js';
 
-// La regola minore/maggiore sta nel modello
-// la usa anche il browser per avvisare prima dell'invio
-export { entitaModifica, stessoLuogo, SOGLIA_MINUTI } from 'modello';
-
 // Confronta due luoghi per decidere se sono identici
 function luogoIdentico(a: Luogo, b: Luogo) {
   return a.testo === b.testo && a.civico === b.civico && a.nome === b.nome && a.lat === b.lat && a.lon === b.lon;

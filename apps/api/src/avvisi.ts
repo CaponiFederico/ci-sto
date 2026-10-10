@@ -2,7 +2,7 @@ import { COLLEZIONI, type Notifica, type Utente } from 'modello';
 import { db } from './firestore.js';
 import { invia } from './push.js';
 
-export type TipoAvviso =
+type TipoAvviso =
   | 'iscritto'
   | 'in_lista'
   | 'uscito'
@@ -60,25 +60,21 @@ async function nomeDi(uid: string) {
   return utente?.nome ?? 'Qualcuno';
 }
 
-export function creaAvvisi(manda: (uid: string, notifica: Notifica) => Promise<unknown>) {
-  return async function mandaAvvisi(avvisi: Avviso[]) {
-    for (const avviso of avvisi) {
-      if (avviso.a === avviso.chi) continue;
+export async function mandaAvvisi(avvisi: Avviso[]) {
+  for (const avviso of avvisi) {
+    if (avviso.a === avviso.chi) continue;
 
-      try {
-        const nome = avviso.chi ? await nomeDi(avviso.chi) : '';
-        await manda(avviso.a, {
-          titolo: avviso.titolo,
-          testo: TESTO[avviso.tipo](avviso, nome),
-          indirizzo: `/#/attivita/${avviso.attivita}`,
-          // Una notifica nuova dello stesso tipo sulla stessa attività sostituisce la precedente
-          etichetta: `${avviso.attivita}:${avviso.tipo}`,
-        });
-      } catch (errore) {
-        console.warn('avviso non inviato:', (errore as Error).message);
-      }
+    try {
+      const nome = avviso.chi ? await nomeDi(avviso.chi) : '';
+      await invia(avviso.a, {
+        titolo: avviso.titolo,
+        testo: TESTO[avviso.tipo](avviso, nome),
+        indirizzo: `/#/attivita/${avviso.attivita}`,
+        // Una notifica nuova dello stesso tipo sulla stessa attività sostituisce la precedente
+        etichetta: `${avviso.attivita}:${avviso.tipo}`,
+      });
+    } catch (errore) {
+      console.warn('avviso non inviato:', (errore as Error).message);
     }
-  };
+  }
 }
-
-export const mandaAvvisi = creaAvvisi(invia);

@@ -103,12 +103,12 @@ export const CAMPI_MODIFICABILI = [
 
 export type Modifica = Partial<Pick<NuovaAttivita, (typeof CAMPI_MODIFICABILI)[number]>>;
 
-export function validaModifica(dati: unknown, adesso = Date.now()): Esito<Modifica> {
+export function validaModifica(dati: unknown): Esito<Modifica> {
   if (typeof dati !== 'object' || dati === null) return { ok: false, errori: ['corpo'] };
   const d = dati as Record<string, unknown>;
   const presenti = CAMPI_MODIFICABILI.filter((c) => d[c] !== undefined);
   if (presenti.length === 0) return { ok: false, errori: ['nessun_campo'] };
-  const { errori, valore } = valida(d, presenti, adesso);
+  const { errori, valore } = valida(d, presenti, Date.now());
   return errori.length > 0 ? { ok: false, errori } : { ok: true, valore };
 }
 

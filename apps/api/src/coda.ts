@@ -30,7 +30,7 @@ export interface InCoda extends Candidato {
 type Ordinabile = Pick<Candidato, 'id' | 'iscrittoIl' | 'retrocessoIl'> & { punteggio?: number };
 
 // Chi ha perso il posto per una riduzione sta davanti a chi non l'ha mai avuto.
-export function ordineCoda(a: Ordinabile, b: Ordinabile) {
+function ordineCoda(a: Ordinabile, b: Ordinabile) {
   const retrocessoA = a.retrocessoIl !== null;
   const retrocessoB = b.retrocessoIl !== null;
   if (retrocessoA !== retrocessoB) return retrocessoA ? -1 : 1;
@@ -45,7 +45,7 @@ export function ordineCoda(a: Ordinabile, b: Ordinabile) {
   return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
 }
 
-export const RETROCESSO = 'avevi il posto e lo hai perso per una riduzione: passi davanti';
+const RETROCESSO = 'avevi il posto e lo hai perso per una riduzione: passi davanti';
 
 interface OpzioniCoda {
   politica: PoliticaCoda;
@@ -101,7 +101,7 @@ export interface InPosto {
 type Retrocedibile = Pick<InPosto, 'id' | 'iscrittoIl' | 'confermatoIl'>;
 
 // Ultimo entrato, primo fuori
-export function ordineRetrocessione(a: Retrocedibile, b: Retrocedibile) {
+function ordineRetrocessione(a: Retrocedibile, b: Retrocedibile) {
   const confermaA = a.confermatoIl ?? a.iscrittoIl;
   const confermaB = b.confermatoIl ?? b.iscrittoIl;
   if (confermaA !== confermaB) return confermaB - confermaA;
