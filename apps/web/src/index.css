@@ -48,6 +48,44 @@ body {
   padding: 0 1.25rem 4rem;
 }
 
+main {
+  max-width: 46rem;
+}
+
+main.larga {
+  max-width: none;
+}
+
+@media (min-width: 60rem) {
+  .colonne {
+    display: grid;
+    grid-template-columns: 15rem minmax(0, 1fr);
+    align-items: start;
+    column-gap: 3rem;
+  }
+
+  .dettaglio .colonne {
+    grid-template-columns: minmax(0, 1fr) 18rem;
+  }
+
+  main > .colonne > .lato {
+    position: sticky;
+    top: 1rem;
+  }
+
+  .lato .filtri {
+    flex-direction: column;
+  }
+
+  .lato .filtri label {
+    flex: none;
+  }
+
+  .dettaglio .lato section:first-child h3 {
+    margin-top: 0;
+  }
+}
+
 header {
   --testo: #ffffff;
   --testo-tenue: #d5e1f0;
@@ -460,6 +498,14 @@ legend {
 
 .filtri label {
   flex: 1 1 8rem;
+}
+
+main > .colonne > .lato {
+  margin-bottom: 1.25rem;
+}
+
+.lato .nota + .nota {
+  margin-top: 0.6rem;
 }
 
 .elenco {

@@ -63,104 +63,110 @@ function Contenuto({ attivita }: { attivita: AttivitaConId }) {
         )}
       </div>
 
-      <p className="etichette">
-        <span className="etichetta">{CATEGORIA[attivita.categoria]}</span>
-        {organizzatore && <span className="etichetta">Organizzata da te</span>}
-        {annullata && <span className="etichetta">Annullata</span>}
-        {!annullata && cominciata && <span className="etichetta">Già cominciata</span>}
-      </p>
+      <div className="colonne">
+        <div>
+          <p className="etichette">
+            <span className="etichetta">{CATEGORIA[attivita.categoria]}</span>
+            {organizzatore && <span className="etichetta">Organizzata da te</span>}
+            {annullata && <span className="etichetta">Annullata</span>}
+            {!annullata && cominciata && <span className="etichetta">Già cominciata</span>}
+          </p>
 
-      {attivita.descrizione && <p className="descrizione">{attivita.descrizione}</p>}
+          {attivita.descrizione && <p className="descrizione">{attivita.descrizione}</p>}
 
-      <dl>
-        <dt>Quando</dt>
-        <dd>
-          <time dateTime={new Date(attivita.inizio).toISOString()}>{quando(attivita.inizio)}</time>
-          {', '}
-          {attivita.durataMinuti} minuti
-        </dd>
-
-        <dt>Dove</dt>
-        <dd>{attivita.luogo.testo}</dd>
-
-        {indirizzo(attivita.luogo) && (
-          <>
-            <dt>Indirizzo</dt>
+          <dl>
+            <dt>Quando</dt>
             <dd>
-              {indirizzo(attivita.luogo)}
-              {lat !== undefined && lon !== undefined && (
-                <>
+              <time dateTime={new Date(attivita.inizio).toISOString()}>{quando(attivita.inizio)}</time>
+              {', '}
+              {attivita.durataMinuti} minuti
+            </dd>
+
+            <dt>Dove</dt>
+            <dd>{attivita.luogo.testo}</dd>
+
+            {indirizzo(attivita.luogo) && (
+              <>
+                <dt>Indirizzo</dt>
+                <dd>
+                  {indirizzo(attivita.luogo)}
+                  {lat !== undefined && lon !== undefined && (
+                    <>
+                      {' · '}
+                      <a href={apriNelleMappe(lat, lon)} target="_blank" rel="noreferrer">
+                        Apri nelle mappe
+                      </a>
+                    </>
+                  )}
+                </dd>
+              </>
+            )}
+
+            {lat !== undefined && lon !== undefined && (
+              <>
+                <dt>Distanza</dt>
+                <dd>
+                  {posizione.punto ? (
+                    `${aDistanza(distanzaKm(posizione.punto, { lat, lon }))} da te, in linea d’aria`
+                  ) : posizione.stato === 'ignota' ? (
+                    <button type="button" className="secondario" onClick={posizione.chiedi}>
+                      {POSIZIONE.ignota}
+                    </button>
+                  ) : (
+                    <span role="status">{POSIZIONE[posizione.stato as keyof typeof POSIZIONE]}</span>
+                  )}
+                </dd>
+              </>
+            )}
+
+            <dt>Organizza</dt>
+            <dd>
+              <Nome uid={attivita.organizzatore} />
+            </dd>
+
+            <dt>Posti</dt>
+            <dd>
+              {posti(attivita)}
+              {attivita.daConfermare > 0 && `, ${attivita.daConfermare} da riconfermare`}
+            </dd>
+
+            <dt>Lista d’attesa</dt>
+            <dd>
+              {politica.nome}: a posti finiti entra per primo {politica.regola}
+            </dd>
+          </dl>
+
+          {lat !== undefined && lon !== undefined && <Mappa nome={nome ?? attivita.luogo.testo} lat={lat} lon={lon} />}
+
+          <Iscrizione attivita={attivita} adesso={adesso} eventi={eventi} />
+        </div>
+
+        <div className="lato">
+          <section>
+            <h3>Chi partecipa</h3>
+            <ul>
+              {conPosto.map((p) => (
+                <li key={p.uid}>
+                  <Nome uid={p.uid} />
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section>
+            <h3>Cronologia</h3>
+            <ul>
+              {eventi.map((e) => (
+                <li key={e.id}>
+                  <time dateTime={new Date(e.quando).toISOString()}>{quando(e.quando)}</time>
                   {' · '}
-                  <a href={apriNelleMappe(lat, lon)} target="_blank" rel="noreferrer">
-                    Apri nelle mappe
-                  </a>
-                </>
-              )}
-            </dd>
-          </>
-        )}
-
-        {lat !== undefined && lon !== undefined && (
-          <>
-            <dt>Distanza</dt>
-            <dd>
-              {posizione.punto ? (
-                `${aDistanza(distanzaKm(posizione.punto, { lat, lon }))} da te, in linea d’aria`
-              ) : posizione.stato === 'ignota' ? (
-                <button type="button" className="secondario" onClick={posizione.chiedi}>
-                  {POSIZIONE.ignota}
-                </button>
-              ) : (
-                <span role="status">{POSIZIONE[posizione.stato as keyof typeof POSIZIONE]}</span>
-              )}
-            </dd>
-          </>
-        )}
-
-        <dt>Organizza</dt>
-        <dd>
-          <Nome uid={attivita.organizzatore} />
-        </dd>
-
-        <dt>Posti</dt>
-        <dd>
-          {posti(attivita)}
-          {attivita.daConfermare > 0 && `, ${attivita.daConfermare} da riconfermare`}
-        </dd>
-
-        <dt>Lista d’attesa</dt>
-        <dd>
-          {politica.nome}: a posti finiti entra per primo {politica.regola}
-        </dd>
-      </dl>
-
-      {lat !== undefined && lon !== undefined && <Mappa nome={nome ?? attivita.luogo.testo} lat={lat} lon={lon} />}
-
-      <Iscrizione attivita={attivita} adesso={adesso} eventi={eventi} />
-
-      <section>
-        <h3>Chi partecipa</h3>
-        <ul>
-          {conPosto.map((p) => (
-            <li key={p.uid}>
-              <Nome uid={p.uid} />
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section>
-        <h3>Cronologia</h3>
-        <ul>
-          {eventi.map((e) => (
-            <li key={e.id}>
-              <time dateTime={new Date(e.quando).toISOString()}>{quando(e.quando)}</time>
-              {' · '}
-              {voceCronologia(e)}
-            </li>
-          ))}
-        </ul>
-      </section>
+                  {voceCronologia(e)}
+                </li>
+              ))}
+            </ul>
+          </section>
+        </div>
+      </div>
     </article>
   );
 }

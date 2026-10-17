@@ -73,101 +73,105 @@ export function Elenco({ filtri, cambiaFiltri }: Proprieta) {
         </a>
       </div>
 
-      <div className="filtri">
-        <label>
-          Categoria
-          <select
-            value={filtri.categoria}
-            onChange={(e) => cambiaFiltri({ ...filtri, categoria: e.target.value as Filtri['categoria'] })}
-          >
-            <option value="tutte">Tutte</option>
-            {CATEGORIE.map((c) => (
-              <option key={c} value={c}>
-                {CATEGORIA[c]}
-              </option>
-            ))}
-          </select>
-        </label>
+      <div className="colonne">
+        <div className="lato">
+          <div className="filtri">
+            <label>
+              Categoria
+              <select
+                value={filtri.categoria}
+                onChange={(e) => cambiaFiltri({ ...filtri, categoria: e.target.value as Filtri['categoria'] })}
+              >
+                <option value="tutte">Tutte</option>
+                {CATEGORIE.map((c) => (
+                  <option key={c} value={c}>
+                    {CATEGORIA[c]}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-        <label>
-          Mostra
-          <select
-            value={filtri.mostra}
-            onChange={(e) => {
-              const mostra = e.target.value as Filtri['mostra'];
-              if (mostra === 'vicine' && posizione.stato === 'ignota') posizione.chiedi();
-              cambiaFiltri({ ...filtri, mostra });
-            }}
-          >
-            {Object.entries(MOSTRA).map(([valore, etichetta]) => (
-              <option key={valore} value={valore}>
-                {etichetta}
-              </option>
-            ))}
-          </select>
-        </label>
+            <label>
+              Mostra
+              <select
+                value={filtri.mostra}
+                onChange={(e) => {
+                  const mostra = e.target.value as Filtri['mostra'];
+                  if (mostra === 'vicine' && posizione.stato === 'ignota') posizione.chiedi();
+                  cambiaFiltri({ ...filtri, mostra });
+                }}
+              >
+                {Object.entries(MOSTRA).map(([valore, etichetta]) => (
+                  <option key={valore} value={valore}>
+                    {etichetta}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-        <label>
-          Ordina
-          <select
-            value={filtri.ordine}
-            onChange={(e) => cambiaFiltri({ ...filtri, ordine: e.target.value as Filtri['ordine'] })}
-          >
-            {Object.entries(ORDINE).map(([valore, etichetta]) => (
-              <option key={valore} value={valore}>
-                {etichetta}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+            <label>
+              Ordina
+              <select
+                value={filtri.ordine}
+                onChange={(e) => cambiaFiltri({ ...filtri, ordine: e.target.value as Filtri['ordine'] })}
+              >
+                {Object.entries(ORDINE).map(([valore, etichetta]) => (
+                  <option key={valore} value={valore}>
+                    {etichetta}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
 
-      <MiaPosizione aperta={vicine && !posizione.punto} />
-      {vicine && (
-        <p className="nota" role="status">
-          {posizione.punto ? VICINE.nota : VICINE.senza}
-        </p>
-      )}
-
-      {errore ? (
-        <p className="errore" role="alert">
-          Non è stato possibile leggere la bacheca. Riprova fra poco.
-        </p>
-      ) : attivita === null ? (
-        <p className="vuoto">Caricamento…</p>
-      ) : attivita.length === 0 ? (
-        <p className="vuoto">Nessuna attività in programma.</p>
-      ) : visibili.length === 0 ? (
-        <p className="vuoto">
-          Nessuna attività con questi filtri.{' '}
-          <button type="button" className="secondario" onClick={() => cambiaFiltri({ ...FILTRI_INIZIALI, ordine: filtri.ordine })}>
-            Togli i filtri
-          </button>
-        </p>
-      ) : (
-        <>
-          {filtrato && (
-            <p className="nota">
-              {visibili.length} su {attivita.length}
+          <MiaPosizione aperta={vicine && !posizione.punto} />
+          {vicine && (
+            <p className="nota" role="status">
+              {posizione.punto ? VICINE.nota : VICINE.senza}
             </p>
           )}
-          {senzaStorico && <p className="nota">{SENZA_STORICO}</p>}
+          {filtrato && visibili.length > 0 && (
+            <p className="nota">
+              {visibili.length} su {attivita?.length}
+            </p>
+          )}
+          {senzaStorico && visibili.length > 0 && <p className="nota">{SENZA_STORICO}</p>}
           {senzaPosizione && <p className="nota">{SENZA_POSIZIONE}</p>}
-          <ul className="elenco">
-            {ordinate.map(({ attivita: a, motivo }) => (
-              <li key={a.id}>
-                <Scheda
-                  attivita={a}
-                  mioStato={stati[a.id]}
-                  sospesa={sospesaDi(a.id)}
-                  cominciata={a.inizio <= adesso}
-                  motivo={motivo ? motivoOrdine(motivo) : undefined}
-                />
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
+        </div>
+
+        <div>
+          {errore ? (
+            <p className="errore" role="alert">
+              Non è stato possibile leggere la bacheca. Riprova fra poco.
+            </p>
+          ) : attivita === null ? (
+            <p className="vuoto">Caricamento…</p>
+          ) : attivita.length === 0 ? (
+            <p className="vuoto">Nessuna attività in programma.</p>
+          ) : visibili.length === 0 ? (
+            <p className="vuoto">
+              Nessuna attività con questi filtri.{' '}
+              <button type="button" className="secondario" onClick={() => cambiaFiltri({ ...FILTRI_INIZIALI, ordine: filtri.ordine })}>
+                Togli i filtri
+              </button>
+            </p>
+          ) : (
+            <ul className="elenco">
+              {ordinate.map(({ attivita: a, motivo }) => (
+                <li key={a.id}>
+                  <Scheda
+                    attivita={a}
+                    mioStato={stati[a.id]}
+                    sospesa={sospesaDi(a.id)}
+                    cominciata={a.inizio <= adesso}
+                    motivo={motivo ? motivoOrdine(motivo) : undefined}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
     </>
   );
 }

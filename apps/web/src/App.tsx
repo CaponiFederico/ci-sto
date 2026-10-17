@@ -170,6 +170,7 @@ function App() {
   const notifiche = useGestisciNotifiche(utente?.uid ?? null);
   const percorso = usePercorso();
   const pagina = rotta(percorso).pagina;
+  const larga = pagina === 'elenco' || pagina === 'dettaglio';
   const contenuto = useRef<HTMLElement>(null);
   const percorsoPrima = useRef(percorso);
 
@@ -315,7 +316,7 @@ function App() {
         {utente && <InSospeso uid={utente.uid} online={online} />}
       </header>
 
-      <main ref={contenuto} tabIndex={-1}>
+      <main ref={contenuto} tabIndex={-1} className={larga ? 'larga' : undefined}>
         {utente ? (
           <ContestoUtente value={utente}>
             <Dentro />
