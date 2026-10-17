@@ -181,6 +181,25 @@ button:disabled {
   cursor: default;
 }
 
+.salta {
+  position: absolute;
+  top: -10rem;
+  left: 1rem;
+  z-index: 1;
+  color: var(--blu);
+  background: #ffffff;
+  border-color: #ffffff;
+}
+
+.salta:focus {
+  top: 0.5rem;
+  outline-color: #ffffff;
+}
+
+main:focus {
+  outline: none;
+}
+
 summary {
   padding: 0.65rem 0;
   cursor: pointer;

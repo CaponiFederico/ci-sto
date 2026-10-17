@@ -1,5 +1,5 @@
 import { onAuthStateChanged, type User } from 'firebase/auth';
-import { useActionState, useEffect, useState, type FormEvent } from 'react';
+import { useActionState, useEffect, useRef, useState, type FormEvent } from 'react';
 import { ErroreApi } from './api';
 import { accediConGoogle, accediConPassword, apriSessione, esci, sessioneRicordata } from './auth';
 import { ContestoNotifiche, useGestisciNotifiche } from './stato-notifiche';
@@ -13,7 +13,7 @@ import { Dettaglio } from './pagine/Dettaglio';
 import { Elenco } from './pagine/Elenco';
 import { Modifica } from './pagine/Modifica';
 import { Nuova } from './pagine/Nuova';
-import { rotta, usePercorso } from './percorso';
+import { rotta, usePercorso, type Rotta } from './percorso';
 import { ContestoPosizione, useRilevaPosizione } from './posizione';
 import { applicaAggiornamento, useNuovaVersione } from './pwa';
 import { useOnline } from './rete';
@@ -55,6 +55,14 @@ function messaggio(errore: unknown) {
   }
   return 'Accesso non riuscito. Riprova.';
 }
+
+const TITOLO: Record<Rotta['pagina'], string> = {
+  elenco: 'Attività',
+  nuova: 'Nuova attività',
+  dettaglio: 'Dettaglio attività',
+  modifica: 'Modifica attività',
+  sconosciuta: 'Pagina non trovata',
+};
 
 // L'indirizzo decide la pagina
 function Pagina() {
@@ -160,6 +168,22 @@ function App() {
   const online = useOnline();
   const nuovaVersione = useNuovaVersione();
   const notifiche = useGestisciNotifiche(utente?.uid ?? null);
+  const percorso = usePercorso();
+  const pagina = rotta(percorso).pagina;
+  const contenuto = useRef<HTMLElement>(null);
+  const percorsoPrima = useRef(percorso);
+
+  useEffect(() => {
+    document.title = utente ? `${TITOLO[pagina]} · Bacheca` : 'Bacheca universitaria';
+  }, [utente, pagina]);
+
+  useEffect(() => {
+    if (percorsoPrima.current === percorso) return;
+    percorsoPrima.current = percorso;
+    contenuto.current?.focus({ preventScroll: true });
+  }, [percorso]);
+
+  const vaiAlContenuto = () => contenuto.current?.focus();
 
   // Vale sia per l'accesso appena fatto sia per la sessione ripresa al ricaricamento.
   useEffect(
@@ -212,6 +236,10 @@ function App() {
 
   return (
     <ContestoNotifiche value={notifiche}>
+      <button type="button" className="salta" onClick={vaiAlContenuto}>
+        Vai al contenuto
+      </button>
+
       <header>
         <h1>
           <a href="#/">Bacheca</a>
@@ -287,7 +315,7 @@ function App() {
         {utente && <InSospeso uid={utente.uid} online={online} />}
       </header>
 
-      <main>
+      <main ref={contenuto} tabIndex={-1}>
         {utente ? (
           <ContestoUtente value={utente}>
             <Dentro />
