@@ -42,7 +42,7 @@ export function Nuova() {
   return (
     <>
       <div className="barra">
-        <h2>Nuova attività</h2>
+        <h2>Appendi un annuncio</h2>
         <a href="#/">Annulla</a>
       </div>
 
@@ -56,7 +56,7 @@ export function Nuova() {
         )}
 
         <button type="submit" disabled={inCorso}>
-          {inCorso ? 'Pubblicazione…' : 'Pubblica'}
+          {inCorso ? 'Pubblicazione…' : 'Appendi'}
         </button>
       </form>
     </>

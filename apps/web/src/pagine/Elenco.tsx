@@ -69,7 +69,7 @@ export function Elenco({ filtri, cambiaFiltri }: Proprieta) {
       <div className="barra">
         <h2>Attività {daCache && <Salvati />}</h2>
         <a className="bottone" href="#/nuova">
-          Nuova attività
+          Appendi un annuncio
         </a>
       </div>
 

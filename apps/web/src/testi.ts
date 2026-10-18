@@ -65,8 +65,9 @@ export function motivoOrdine(motivo: Motivo) {
         : `Hai già partecipato ${n} volte ad attività di questa categoria`;
     case 'luogo':
       return n === 1 ? 'Sei già stato qui 1 volta' : `Sei già stato qui ${n} volte`;
+    // La distanza in metri è già nella riga del luogo
     case 'vicinanza':
-      return `A${aDistanza(n).slice(1)} da te`;
+      return 'Vicina a te';
   }
 }
 

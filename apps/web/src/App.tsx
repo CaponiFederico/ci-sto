@@ -58,7 +58,7 @@ function messaggio(errore: unknown) {
 
 const TITOLO: Record<Rotta['pagina'], string> = {
   elenco: 'Attività',
-  nuova: 'Nuova attività',
+  nuova: 'Appendi un annuncio',
   dettaglio: 'Dettaglio attività',
   modifica: 'Modifica attività',
   profilo: 'Profilo',
