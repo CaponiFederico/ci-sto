@@ -5,6 +5,7 @@ export type Rotta =
   | { pagina: 'nuova' }
   | { pagina: 'dettaglio'; id: string }
   | { pagina: 'modifica'; id: string }
+  | { pagina: 'profilo' }
   | { pagina: 'sconosciuta' };
 
 
@@ -31,6 +32,7 @@ export function rotta(percorso: string): Rotta {
 
   if (!primo) return { pagina: 'elenco' };
   if (primo === 'nuova' && !id) return { pagina: 'nuova' };
+  if (primo === 'profilo' && !id) return { pagina: 'profilo' };
   if (primo === 'attivita' && id && resto.length === 0) {
     if (!azione) return { pagina: 'dettaglio', id };
     if (azione === 'modifica') return { pagina: 'modifica', id };

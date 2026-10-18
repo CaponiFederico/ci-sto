@@ -4,7 +4,6 @@ import { ErroreApi } from './api';
 import { accediConGoogle, accediConPassword, apriSessione, esci, sessioneRicordata } from './auth';
 import { ContestoNotifiche, useGestisciNotifiche } from './stato-notifiche';
 import { Conferma, type Domanda } from './componenti/Conferma';
-import { Notifiche } from './componenti/Notifiche';
 import { FILTRI_INIZIALI } from './filtri';
 import { inviaSospese } from './invio';
 import { useSospese } from './dati';
@@ -13,6 +12,7 @@ import { Dettaglio } from './pagine/Dettaglio';
 import { Elenco } from './pagine/Elenco';
 import { Modifica } from './pagine/Modifica';
 import { Nuova } from './pagine/Nuova';
+import { Profilo } from './pagine/Profilo';
 import { rotta, usePercorso, type Rotta } from './percorso';
 import { ContestoPosizione, useRilevaPosizione } from './posizione';
 import { applicaAggiornamento, useNuovaVersione } from './pwa';
@@ -61,6 +61,7 @@ const TITOLO: Record<Rotta['pagina'], string> = {
   nuova: 'Nuova attività',
   dettaglio: 'Dettaglio attività',
   modifica: 'Modifica attività',
+  profilo: 'Profilo',
   sconosciuta: 'Pagina non trovata',
 };
 
@@ -80,6 +81,8 @@ function Pagina() {
       return <Dettaglio key={r.id} id={r.id} />;
     case 'modifica':
       return <Modifica key={r.id} id={r.id} />;
+    case 'profilo':
+      return <Profilo />;
     case 'sconosciuta':
       return (
         <p className="vuoto">
@@ -253,6 +256,9 @@ function App() {
           ) : utente ? (
             <>
               <span>{utente.email}</span>
+              <a href="#/profilo" aria-current={pagina === 'profilo' ? 'page' : undefined}>
+                Profilo
+              </a>
               <Uscita uid={utente.uid} />
             </>
           ) : (
@@ -312,7 +318,6 @@ function App() {
           </p>
         )}
 
-        {utente && <Notifiche />}
         {utente && <InSospeso uid={utente.uid} online={online} />}
       </header>
 

@@ -94,7 +94,7 @@ npm run utente:test
 | la riconferma | nella stessa attività, spostare l'orario di più di mezz'ora; poi entrare come `utente.test2` | chi aveva il posto deve riconfermare entro una scadenza |
 | gli stati | come `utente.test`: «Cineforum», «Passaggio per Livorno», «Gruppo studio Analisi 2» | posto confermato; attività annullata; posti liberi |
 | l'uso senza rete | togliere la rete e ricaricare; iscriversi a un'attività | elenco e proprie attività restano leggibili; l'iscrizione resta in sospeso e parte al ritorno della rete |
-| le notifiche | come `utente.test` premere «Attiva le notifiche»; da un altro browser, come `utente.test3`, iscriversi a «Ripasso Basi di dati» | al primo arriva la notifica, anche con la scheda chiusa |
+| le notifiche | come `utente.test` aprire «Profilo» e premere «Attiva le notifiche»; da un altro browser, come `utente.test3`, iscriversi a «Ripasso Basi di dati» | al primo arriva la notifica, anche con la scheda chiusa |
 
 ---
 
@@ -196,7 +196,7 @@ di openstreetmap.org. Il riquadro è la pagina di un altro sito: si vede solo co
 posizione che mostra è indicativa.
 
 La distanza si calcola nel browser, in linea d'aria, fra l'indirizzo dell'attività e la
-posizione di chi guarda. Quest'ultima si imposta da «La mia posizione»: è quella del dispositivo,
+posizione di chi guarda. Quest'ultima si imposta dal «Profilo»: è quella del dispositivo,
 chiesta solo quando serve, oppure un indirizzo scelto a mano.
 
 Cambiare il luogo di un'attività con iscritti è una modifica che chiede loro di riconfermare;
@@ -232,7 +232,7 @@ npm run preview
 
 ## Notifiche
 
-Si attivano da «Attiva le notifiche».
+Si attivano dal «Profilo», con «Attiva le notifiche».
 
 | Notifica | A chi | Quando |
 |---|---|---|
@@ -343,7 +343,7 @@ apps/
   web/                    Vite + React + TypeScript
     src/App.tsx           accesso e scelta della pagina
     src/percorso.ts       navigazione: l'indirizzo dopo # decide la pagina
-    src/pagine/           elenco, nuova attività, dettaglio, modifica
+    src/pagine/           elenco, nuova attività, dettaglio, modifica, profilo
     src/componenti/       scheda, campi del modulo, luogo e ricerca, mappa, posizione, iscrizione, notifiche, conferma, nome
     src/dati.ts           letture da Firestore in tempo reale
     src/azioni.ts         scritture, sempre tramite l'API
@@ -352,7 +352,7 @@ apps/
     src/rete.ts           stato della connessione
     src/posizione.ts      posizione di chi guarda: dal dispositivo o da un indirizzo scelto
     src/notifiche.ts      permesso e registrazione del dispositivo alle notifiche
-    src/stato-notifiche.ts  stato delle notifiche, condiviso fra intestazione e dettaglio
+    src/stato-notifiche.ts  stato delle notifiche, condiviso fra profilo e dettaglio
     src/filtri.ts         filtri dell'elenco
     src/ordine.ts         ordine personale: pesi, punteggio, motivo
     src/testi.ts          messaggi per ogni stato ed esito

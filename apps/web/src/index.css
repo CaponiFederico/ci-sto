@@ -172,6 +172,16 @@ a:hover {
   overflow-wrap: anywhere;
 }
 
+.sessione a {
+  display: inline-block;
+  padding: 0.65rem 0;
+}
+
+[aria-current='page'] {
+  font-weight: 700;
+  text-decoration-thickness: 2px;
+}
+
 @media (max-width: 30rem) {
   header > .sessione {
     grid-column: 1 / -1;
@@ -244,9 +254,13 @@ summary {
 }
 
 .notifiche {
-  margin: 0.5rem 0 0;
-  font-size: 0.9375rem;
-  color: var(--testo-tenue);
+  display: grid;
+  justify-items: start;
+  gap: 0.75rem;
+}
+
+.notifiche p {
+  margin: 0;
 }
 
 .credenziali {
@@ -317,7 +331,8 @@ input[type='checkbox'] {
 }
 
 .offline button,
-.errore button {
+.errore button,
+.posizione p button {
   min-height: 2rem;
   padding: 0.2rem 0.75rem;
   font-size: inherit;
@@ -433,23 +448,20 @@ legend {
 }
 
 .posizione {
-  margin-bottom: 1.25rem;
-  font-size: 0.9375rem;
-  color: var(--testo-tenue);
-}
-
-.posizione[open] {
   display: grid;
   gap: 0.75rem;
+}
+
+.posizione p {
+  margin: 0;
 }
 
 .posizione > button {
   justify-self: start;
 }
 
-.a-mano[open] {
-  display: grid;
-  gap: 0.75rem;
+.profilo h3 + * {
+  margin-top: 0.75rem;
 }
 
 .mappa {
@@ -710,7 +722,8 @@ dialog p {
   padding: 0.5rem 0;
 }
 
-.dettaglio h3 {
+.dettaglio h3,
+.profilo h3 {
   margin: 2rem 0 0;
   padding-bottom: 0.4rem;
   font-size: 1.0625rem;

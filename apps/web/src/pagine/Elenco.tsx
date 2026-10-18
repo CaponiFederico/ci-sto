@@ -1,5 +1,4 @@
 import { CATEGORIE } from 'modello';
-import { MiaPosizione } from '../componenti/MiaPosizione';
 import { Salvati } from '../componenti/Salvati';
 import { Scheda } from '../componenti/Scheda';
 import {
@@ -16,6 +15,7 @@ import { usePosizione } from '../posizione';
 import { useUtente } from '../sessione';
 import {
   CATEGORIA,
+  IMPOSTA_POSIZIONE,
   MOSTRA,
   motivoOrdine,
   ORDINE,
@@ -124,10 +124,10 @@ export function Elenco({ filtri, cambiaFiltri }: Proprieta) {
             </label>
           </div>
 
-          <MiaPosizione aperta={vicine && !posizione.punto} />
           {vicine && (
             <p className="nota" role="status">
-              {posizione.punto ? VICINE.nota : VICINE.senza}
+              {posizione.punto ? VICINE.nota : VICINE.senza}{' '}
+              {!posizione.punto && <a href="#/profilo">{IMPOSTA_POSIZIONE}</a>}
             </p>
           )}
           {filtrato && visibili.length > 0 && (
@@ -136,7 +136,11 @@ export function Elenco({ filtri, cambiaFiltri }: Proprieta) {
             </p>
           )}
           {senzaStorico && visibili.length > 0 && <p className="nota">{SENZA_STORICO}</p>}
-          {senzaPosizione && <p className="nota">{SENZA_POSIZIONE}</p>}
+          {senzaPosizione && (
+            <p className="nota">
+              {SENZA_POSIZIONE} <a href="#/profilo">{IMPOSTA_POSIZIONE}</a>
+            </p>
+          )}
         </div>
 
         <div>

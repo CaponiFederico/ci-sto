@@ -69,8 +69,9 @@ export function motivoOrdine(motivo: Motivo) {
   }
 }
 
-export const SENZA_POSIZIONE =
-  'L’ordine non tiene conto della distanza: per usarla imposta «La mia posizione» qui sopra.';
+export const SENZA_POSIZIONE = 'L’ordine non tiene conto della distanza.';
+
+export const IMPOSTA_POSIZIONE = 'Imposta la posizione nel profilo';
 
 export const SENZA_STORICO =
   'Non hai ancora partecipato a nessuna attività: per ora l’ordine è quello per data.';
@@ -126,20 +127,16 @@ export const POSIZIONE: Record<Exclude<StatoPosizione, 'nota'>, string> = {
 };
 
 export const MIA_POSIZIONE = {
-  titolo: 'La mia posizione',
-  assente: 'non impostata',
-  rilevata: 'dal dispositivo',
-  scelta: 'un indirizzo scelto',
   aCosaServe:
     'Serve per calcolare la distanza tra questo dispositivo e le attività. Puoi usare la posizione del dispositivo o scegliere un indirizzo.',
   dalDispositivo: 'Uso la posizione del dispositivo.',
   usa: 'Usa la posizione del dispositivo',
-  aMano: 'Non puoi o non vuoi usare la posizione del dispositivo?',
-  etichetta: 'Indirizzo da cui calcolare le distanze',
+  etichetta: 'Oppure un indirizzo da cui calcolare le distanze',
+  cambia: 'Un altro indirizzo',
 };
 
 export const VICINE = {
-  senza: 'Per vedere le attività vicine serve la tua posizione: usa quella del dispositivo o scegli un indirizzo qui sotto.',
+  senza: 'Per vedere le attività vicine serve la tua posizione.',
   nota: `Solo le attività con un indirizzo, entro ${RAGGIO_VICINO_KM} km in linea d’aria.`,
 };
 
@@ -151,7 +148,8 @@ export const NOTIFICHE = {
   prova: 'Mandane una di prova',
   provaInviata: 'Inviata.',
   provaFallita: 'Non inviata.',
-  negate: 'Le notifiche sono bloccate dal browsera.',
+  negate: 'Le notifiche sono bloccate dal browser.',
+  nonSupportate: 'Questo browser non supporta le notifiche.',
   errore: 'Non è stato possibile completare l’operazione. Riprova.',
   servizio:
     'Il permesso c’è, ma il browser non riesce a registrarsi al suo servizio di notifiche.',

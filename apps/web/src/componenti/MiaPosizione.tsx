@@ -2,21 +2,17 @@ import { usePosizione } from '../posizione';
 import { MIA_POSIZIONE, POSIZIONE } from '../testi';
 import { Ricerca } from './Ricerca';
 
-// il dispositivo oun indirizzo scelto a mano
-export function MiaPosizione({ aperta }: { aperta: boolean }) {
+// Da dove si calcolano le distanze
+export function MiaPosizione() {
+  //indirizzo scelto a mano >>> dispositivo
   const { aMano, stato, chiedi, scegli } = usePosizione();
-  const riassunto = aMano ? MIA_POSIZIONE.scelta : stato === 'nota' ? MIA_POSIZIONE.rilevata : MIA_POSIZIONE.assente;
 
   return (
-    <details className="posizione" open={aperta || undefined}>
-      <summary>
-        {MIA_POSIZIONE.titolo}: {riassunto}
-      </summary>
-
+    <div className="posizione">
       <p className="nota">{MIA_POSIZIONE.aCosaServe}</p>
 
       {aMano ? (
-        <p className="nota" role="status">
+        <p role="status">
           Indirizzo scelto: <strong>{aMano.nome}</strong>{' '}
           <button type="button" className="secondario" onClick={() => scegli(null)}>
             Togli
@@ -27,15 +23,10 @@ export function MiaPosizione({ aperta }: { aperta: boolean }) {
           {MIA_POSIZIONE.usa}
         </button>
       ) : (
-        <p className="nota" role="status">
-          {stato === 'nota' ? MIA_POSIZIONE.dalDispositivo : POSIZIONE[stato]}
-        </p>
+        <p role="status">{stato === 'nota' ? MIA_POSIZIONE.dalDispositivo : POSIZIONE[stato]}</p>
       )}
 
-      <details className="a-mano" open={aMano !== null || stato === 'negata' || stato === 'non_disponibile' || undefined}>
-        <summary>{MIA_POSIZIONE.aMano}</summary>
-        <Ricerca etichetta={MIA_POSIZIONE.etichetta} scelto={scegli} />
-      </details>
-    </details>
+      <Ricerca etichetta={aMano ? MIA_POSIZIONE.cambia : MIA_POSIZIONE.etichetta} scelto={scegli} />
+    </div>
   );
 }
