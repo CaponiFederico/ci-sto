@@ -166,6 +166,7 @@ export function Elenco({ filtri, cambiaFiltri }: Proprieta) {
                   <Scheda
                     attivita={a}
                     mioStato={stati[a.id]}
+                    statoNoto={a.id in stati}
                     sospesa={sospesaDi(a.id)}
                     cominciata={a.inizio <= adesso}
                     motivo={motivo ? motivoOrdine(motivo) : undefined}

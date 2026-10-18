@@ -23,43 +23,48 @@ interface Proprieta {
   eventi: Evento[];
 }
 
+// restituisce l'avviso da mostrare, o null se non c'è niente da dire
+export async function richiedi(azione: AzioneSospesa | 'ritira', attivita: AttivitaConId, uid: string) {
+  try {
+    await togli(attivita.id);
+    if (azione === 'ritira') return null;
+    if (azione === 'iscrivi') return avvisoIscrizione(await iscrivi(attivita.id, attivita.versione));
+    if (azione === 'riconferma') return avvisoRiconferma(await riconferma(attivita.id));
+    return avvisoUscita(await lascia(attivita.id));
+  } catch (e) {
+    if (azione === 'ritira' || !(e instanceof ErroreApi && e.codice === 'api_irraggiungibile')) {
+      return 'Qualcosa non ha funzionato. Riprova fra poco.';
+    }
+
+    // Senza rete la richiesta va in coda
+    try {
+      await metti({
+        idAttivita: attivita.id,
+        uid,
+        azione,
+        versioneVista: attivita.versione,
+        titolo: attivita.titolo,
+        creataIl: Date.now(),
+      });
+      return null;
+    } catch {
+      return 'Il servizio non risponde, e su questo dispositivo la richiesta non si può conservare.';
+    }
+  }
+}
+
 export function Iscrizione({ attivita, adesso, eventi }: Proprieta) {
   const utente = useUtente();
   const notifiche = useNotifiche();
   const { stato, errore } = useMioStato(attivita, utente.uid);
   const sospesa = useSospese(utente.uid).find((s) => s.idAttivita === attivita.id);
 
-  // Lo stato di chi chiede: posizione e motivo li conosce solo l'API
-  const [avviso, invia, inCorso] = useActionState(async (_prima: string | null, dati: FormData) => {
-    const azione = dati.get('azione');
-    try {
-      await togli(attivita.id);
-      if (azione === 'ritira') return null;
-      if (azione === 'iscrivi') return avvisoIscrizione(await iscrivi(attivita.id, attivita.versione));
-      if (azione === 'riconferma') return avvisoRiconferma(await riconferma(attivita.id));
-      return avvisoUscita(await lascia(attivita.id));
-    } catch (e) {
-      // Un errore che non è la rete non si accoda
-      if (!(e instanceof ErroreApi && e.codice === 'api_irraggiungibile')) {
-        return 'Qualcosa non ha funzionato. Riprova fra poco.';
-      }
-
-      // Senza rete la richiesta va in coda
-      try {
-        await metti({
-          idAttivita: attivita.id,
-          uid: utente.uid,
-          azione: azione as AzioneSospesa,
-          versioneVista: attivita.versione,
-          titolo: attivita.titolo,
-          creataIl: Date.now(),
-        });
-        return null;
-      } catch {
-        return 'Il servizio non risponde, e su questo dispositivo la richiesta non si può conservare.';
-      }
-    }
-  }, null);
+  // Lo stato di chi chiede
+  const [avviso, invia, inCorso] = useActionState(
+    (_prima: string | null, dati: FormData) =>
+      richiedi(dati.get('azione') as AzioneSospesa | 'ritira', attivita, utente.uid),
+    null,
+  );
 
   const proposta = notifiche.stato === 'spente' && (
     <p className="nota">
