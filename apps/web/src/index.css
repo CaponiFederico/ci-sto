@@ -24,6 +24,14 @@
   --tocco: 2.75rem;
 }
 
+:root[data-tema='chiaro'] {
+  color-scheme: light;
+}
+
+:root[data-tema='scuro'] {
+  color-scheme: dark;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -422,6 +430,7 @@ legend {
   font-weight: 600;
 }
 
+.scelta,
 .modulo .scelta {
   display: flex;
   align-items: start;
@@ -458,6 +467,11 @@ legend {
 
 .posizione > button {
   justify-self: start;
+}
+
+.scelte {
+  display: grid;
+  gap: 0.6rem;
 }
 
 .profilo h3 + * {

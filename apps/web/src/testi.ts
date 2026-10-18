@@ -28,6 +28,7 @@ import type { Campo } from './modulo';
 import type { Motivo } from './ordine';
 import type { StatoPosizione } from './posizione';
 import type { AzioneSospesa } from './sospese';
+import type { Tema } from './tema';
 
 export const CATEGORIA: Record<Categoria, string> = {
   sport: 'Sport',
@@ -133,6 +134,12 @@ export const MIA_POSIZIONE = {
   usa: 'Usa la posizione del dispositivo',
   etichetta: 'Oppure un indirizzo da cui calcolare le distanze',
   cambia: 'Un altro indirizzo',
+};
+
+export const TEMA: Record<Tema, string> = {
+  sistema: 'Come il dispositivo',
+  chiaro: 'Chiaro',
+  scuro: 'Scuro',
 };
 
 export const VICINE = {

@@ -353,6 +353,7 @@ apps/
     src/posizione.ts      posizione di chi guarda: dal dispositivo o da un indirizzo scelto
     src/notifiche.ts      permesso e registrazione del dispositivo alle notifiche
     src/stato-notifiche.ts  stato delle notifiche, condiviso fra profilo e dettaglio
+    src/tema.ts           tema chiaro, scuro o del dispositivo, scelto nel profilo
     src/filtri.ts         filtri dell'elenco
     src/ordine.ts         ordine personale: pesi, punteggio, motivo
     src/testi.ts          messaggi per ogni stato ed esito

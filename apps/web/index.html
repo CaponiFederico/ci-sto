@@ -11,6 +11,9 @@
       content="Attività fra studenti: pubblica, trova compagni, iscriviti."
     />
     <title>Bacheca universitaria</title>
+    <script>
+      document.documentElement.dataset.tema = localStorage.getItem('bacheca:tema') ?? '';
+    </script>
   </head>
   <body>
     <div id="root"></div>
