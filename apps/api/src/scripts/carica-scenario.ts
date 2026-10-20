@@ -9,11 +9,19 @@ function fermati(messaggio: string): never {
   process.exit(1);
 }
 
-// Uso: npm run scenario -- 2026-11-09 
-const data = process.argv[2] ?? '';
-const programma = /^\d{4}-\d{2}-\d{2}$/.test(data) ? new Date(`${data}T00:00:00`).getTime() : NaN;
+// Uso: npm run scenario [-- AAAA-MM-GG]; senza data il programma parte da domani
+const data = process.argv[2];
+const domani = new Date();
+domani.setHours(0, 0, 0, 0);
+domani.setDate(domani.getDate() + 1);
+const programma =
+  data === undefined
+    ? domani.getTime()
+    : /^\d{4}-\d{2}-\d{2}$/.test(data)
+      ? new Date(`${data}T00:00:00`).getTime()
+      : NaN;
 
-if (Number.isNaN(programma)) fermati('manca la data di inizio del programma: npm run scenario -- AAAA-MM-GG');
+if (Number.isNaN(programma)) fermati('data non valida: npm run scenario -- AAAA-MM-GG');
 if (programma < Date.now() || programma > Date.now() + 60 * GIORNO) {
   fermati('la data deve essere nel futuro, entro due mesi');
 }

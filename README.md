@@ -294,10 +294,11 @@ npm run consolida
 
 Lo stesso storico si può caricare sul progetto, per avere una bacheca già popolata: diciotto
 attività fra passate e in programma, con i due primi account di prova fra le persone che vi
-partecipano. La data è il giorno da cui cominciano le attività in programma.
+partecipano. Le attività in programma cominciano da domani, o dal giorno indicato (entro due mesi).
 
 ```bash
-npm run scenario -- 2026-11-09
+npm run scenario
+npm run scenario -- AAAA-MM-GG
 ```
 
 Il comando va lanciato con l'API spenta e chiede di scrivere il nome del progetto. Ripeterlo toglie
