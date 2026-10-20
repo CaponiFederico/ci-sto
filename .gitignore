@@ -9,6 +9,8 @@ build/
 *-service-account.json
 serviceAccountKey.json
 
+copie/
+
 # Firebase
 .firebase/
 firebase-debug.log

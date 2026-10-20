@@ -305,6 +305,15 @@ Il comando va lanciato con l'API spenta e chiede di scrivere il nome del progett
 le attività organizzate dalle persone d'esempio, comprese quelle pubblicate nel frattempo dai due
 account di prova, e le ricrea.
 
+Per partire invece da una bacheca vuota (per esempio dopo una prova precedente) c'è un comando che
+toglie tutte le attività, con iscritti e cronologia, e gli storici delle partecipazioni. Restano
+account, profili e dispositivi delle notifiche. Va lanciato con l'API spenta, chiede di scrivere il
+nome del progetto e prima di cancellare salva una copia in `copie/`.
+
+```bash
+npm run svuota
+```
+
 ## Emulatori
 
 Autenticazione e Firestore in locale, senza toccare i dati veri. Richiede Java.
@@ -374,7 +383,7 @@ apps/
     src/job.ts            operazioni a tempo: promemoria, scadenze, storico
     src/credenziali.ts    chiave del service account, dal .env o da un file
     src/scenario.ts       storico e attività d'esempio
-    src/scripts/          comandi da terminale: account di prova, scenario, consolidamento, job
+    src/scripts/          comandi da terminale: account di prova, svuotamento, scenario, consolidamento, job
 packages/
   modello/                tipi, costanti e regole condivise da web e api
 firebase.json             hosting, regole Firestore, emulatori
