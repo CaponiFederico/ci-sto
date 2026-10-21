@@ -10,7 +10,7 @@ function interpreta(testo: string, origine: string): ServiceAccount {
   try {
     chiave = JSON.parse(testo);
   } catch {
-    throw new Error(`${origine} non contiene un JSON valido: vedi .env.example`);
+    throw new Error(`${origine} non contiene un JSON valido: vedi il README`);
   }
   const mancanti = CAMPI.filter((campo) => typeof chiave?.[campo] !== 'string');
   if (mancanti.length > 0) throw new Error(`${origine}: nella chiave manca ${mancanti.join(', ')}`);
@@ -24,7 +24,7 @@ export function chiaveDelServizio(): ServiceAccount {
 
   const percorso = process.env.GOOGLE_APPLICATION_CREDENTIALS;
   if (!percorso) {
-    throw new Error('manca FIREBASE_SERVICE_ACCOUNT o GOOGLE_APPLICATION_CREDENTIALS: vedi .env.example');
+    throw new Error('manca FIREBASE_SERVICE_ACCOUNT o GOOGLE_APPLICATION_CREDENTIALS: vedi il README');
   }
 
   let testo: string;

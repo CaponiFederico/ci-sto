@@ -46,7 +46,7 @@ const indirizzi = (process.env.TEST_USER_EMAIL ?? '')
   .split(',')
   .map((e) => e.trim())
   .filter(Boolean);
-if (indirizzi.length < 2) fermati('servono due indirizzi in TEST_USER_EMAIL: vedi .env.example');
+if (indirizzi.length < 2) fermati('servono due indirizzi in TEST_USER_EMAIL: vedi il README');
 
 const interpreti: Record<string, string> = {};
 for (const personaggio of Object.keys(PERSONE)) interpreti[personaggio] = `prova-${personaggio}`;

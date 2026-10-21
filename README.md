@@ -30,21 +30,37 @@ Nucleo:
 git clone https://github.com/CaponiFederico/ci-sto.git
 cd ci-sto
 npm install
-cp .env.example .env
 ```
 
-Le variabili sono documentate in [`.env.example`](.env.example).
+Il file `.env` va copiato nella radice.
 
-Il file `.env` non è versionato.
+| Variabile | A cosa serve |
+|---|---|
+| `PORT` | porta dell'API |
+| `CORS_ORIGINS` | origini da cui il browser può chiamare l'API |
+| `FIREBASE_SERVICE_ACCOUNT` | chiave del service account, su una riga; in alternativa `GOOGLE_APPLICATION_CREDENTIALS` con il percorso del file |
+| `ALLOWED_EMAIL_DOMAINS` | domini ammessi all'accesso |
+| `ALLOWED_EMAILS` | indirizzi ammessi fuori da quei domini: gli account di prova |
+| `TEST_USER_EMAIL`, `TEST_USER_PASSWORD` | account creati da `npm run utente:test` |
+| `VITE_API_BASE_URL` | indirizzo dell'API, scritto nel frontend al momento della build |
+| `VITE_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | chiavi delle notifiche, generate con `npx web-push generate-vapid-keys`; senza, le notifiche restano spente |
+| `VITE_FIREBASE_*` | configurazione pubblica del progetto Firebase |
 
-Le notifiche hanno bisogno di una coppia di chiavi, da generare una volta:
+Le `VITE_*` finiscono nel codice del frontend e sono pubbliche; le altre restano nell'API.
+
+La prima volta, con l'API ancora spenta, si prepara la bacheca d'esempio. Entrambi i comandi
+chiedono di scrivere il nome del progetto, `bacheca-unipi-fc`, per confermare.
 
 ```bash
-npx web-push generate-vapid-keys
+npm run svuota
 ```
 
-La chiave pubblica va in `VITE_VAPID_PUBLIC_KEY`, quella privata in `VAPID_PRIVATE_KEY`.
-Senza chiavi l'applicazione funziona lo stesso, con le notifiche spente.
+Poi si carica lo scenario: attività passate e in programma a partire da domani, con gli account di
+prova fra i partecipanti.
+
+```bash
+npm run scenario
+```
 
 Poi, in due terminali:
 
@@ -305,15 +321,6 @@ Il comando va lanciato con l'API spenta e chiede di scrivere il nome del progett
 le attività organizzate dalle persone d'esempio, comprese quelle pubblicate nel frattempo dai due
 account di prova, e le ricrea.
 
-Per partire invece da una bacheca vuota (per esempio dopo una prova precedente) c'è un comando che
-toglie tutte le attività, con iscritti e cronologia, e gli storici delle partecipazioni. Restano
-account, profili e dispositivi delle notifiche. Va lanciato con l'API spenta, chiede di scrivere il
-nome del progetto e prima di cancellare salva una copia in `copie/`.
-
-```bash
-npm run svuota
-```
-
 ## Emulatori
 
 Autenticazione e Firestore in locale, senza toccare i dati veri. Richiede Java.
@@ -340,7 +347,7 @@ npm run deploy:regole
 ```
 
 Il sito pubblicato (`https://bacheca-unipi-fc.web.app`) chiama l'API all'indirizzo scritto in
-`VITE_API_BASE_URL` al momento della build. Con il valore dell'esempio risponde quindi solo sul
+`VITE_API_BASE_URL` al momento della build. Con il valore del `.env` (`http://localhost:3000`) risponde quindi solo sul
 computer dove l'API è accesa, e la sua origine deve comparire in `CORS_ORIGINS`. Il percorso
 principale per provare l'applicazione è quello locale descritto in «Avvio».
 
