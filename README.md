@@ -16,7 +16,7 @@ prima dell'inizio.
 
 ## Avvio
 
-Serve Node.js ≥ 20 (sviluppato su 24.21.0)
+Serve Node.js ≥ 22.12 (sviluppato su 24.21.0)
 
 ```bash
 git clone https://github.com/CaponiFederico/ci-sto.git
